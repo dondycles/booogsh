@@ -1,9 +1,11 @@
 import type { Metadata } from "next";
 import { Poppins } from "next/font/google";
 import "./globals.css";
-import ConvexClientProvider from "@/components/ConvexClientProvider";
+import ConvexClientProvider from "@/components/providers/convex-client-provider";
 import { ClerkProvider } from "@clerk/nextjs";
 import { Toaster } from "@/components/ui/sonner";
+import { ThemeProvider } from "@/components/providers/theme-provider";
+import { shadcn } from "@clerk/themes";
 
 const poppins = Poppins({
   variable: "--font-poppins",
@@ -25,17 +27,29 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body className={`${poppins.variable} font-poppins antialiased dark`}>
+    <html lang="en" suppressHydrationWarning>
+      <body className={`${poppins.variable} font-poppins antialiased `}>
         <ClerkProvider
           dynamic
           afterSignOutUrl={"/"}
           signInForceRedirectUrl={"/feed"}
           signUpForceRedirectUrl={"/feed"}
+          appearance={{
+            theme: shadcn,
+          }}
         >
-          <ConvexClientProvider>{children}</ConvexClientProvider>
+          <ConvexClientProvider>
+            <ThemeProvider
+              attribute="class"
+              defaultTheme="system"
+              enableSystem
+              disableTransitionOnChange
+            >
+              {children}
+              <Toaster richColors />
+            </ThemeProvider>
+          </ConvexClientProvider>
         </ClerkProvider>
-        <Toaster richColors />
       </body>
     </html>
   );

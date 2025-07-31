@@ -51,7 +51,7 @@ export default function AddPostForm() {
           }
           toast.warning("Post could not be added. Please try again.");
         })}
-        className="flex flex-col gap-4 bg-muted/25 rounded-md p-4"
+        className="flex flex-col gap-2 sm:gap-4 bg-muted rounded-md p-2 sm:p-4"
       >
         <FormField
           name="message"
@@ -64,7 +64,7 @@ export default function AddPostForm() {
             </FormItem>
           )}
         />
-        <div className="flex gap-4 flex-wrap justify-between">
+        <div className="flex gap-2 sm:gap-4 flex-wrap justify-between">
           <FormField
             control={form.control}
             name="privacy"

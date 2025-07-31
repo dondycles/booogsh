@@ -35,9 +35,9 @@ export default function PostCard({ post, currentUser }: PostCardProps) {
   return (
     <div
       key={post._id}
-      className="flex flex-col gap-4 bg-muted/25 rounded-md p-4"
+      className="flex flex-col gap-2 sm:gap-4 bg-muted rounded-md pt-2 sm:pt-4"
     >
-      <div className="flex place-items-start justify-between  text-muted-foreground gap-2">
+      <div className="flex place-items-start justify-between  text-muted-foreground gap-2  px-2 sm:px-4 ">
         <div className="flex gap-2 items-start truncate">
           {post.user?.pfp ? (
             <Image
@@ -69,20 +69,27 @@ export default function PostCard({ post, currentUser }: PostCardProps) {
         </div>
         <PostOptions currentUser={currentUser} post={post} />
       </div>
-      <p className="whitespace-pre-wrap">{post.message}</p>
-      <div className="grid grid-cols-3 gap-px mt-4">
+      <p className="whitespace-pre-wrap text-sm sm:text-base text-foreground  px-2 sm:px-4 ">
+        {post.message}
+      </p>
+
+      <div className="grid grid-cols-3 gap-px mt-4 h-10 bg-accent/30 rounded-b-md">
         <LikeButton currentUser={currentUser} post={post} />
         <Button
-          variant="secondary"
-          className=" text-muted-foreground rounded-none truncate"
+          variant="ghost"
+          className=" text-muted-foreground rounded-none truncate h-full"
         >
-          <MessageSquare />
+          <span>
+            <MessageSquare />
+          </span>
         </Button>
         <Button
-          variant="secondary"
-          className=" text-muted-foreground rounded-l-none truncate"
+          variant="ghost"
+          className=" text-muted-foreground rounded-none  rounded-br-md truncate  h-full"
         >
-          <Share2 />
+          <span>
+            <Share2 />
+          </span>
         </Button>
       </div>
     </div>
@@ -123,13 +130,14 @@ function LikeButton({ post, currentUser }: PostCardProps) {
   return (
     <Button
       onClick={() => handleToggleLikePost({ postId: post._id })}
-      variant="secondary"
-      className=" text-muted-foreground rounded-r-none truncate"
+      variant="ghost"
+      className=" text-muted-foreground rounded-none rounded-bl-md truncate h-full"
     >
-      <Heart
-        className={`${isLiked ? "text-foreground fill-foreground" : "text-muted-foreground"} `}
-      />
-
+      <span>
+        <Heart
+          className={`text-muted-foreground ${isLiked ? "fill-muted-foreground" : ""} `}
+        />
+      </span>
       {post.likesCount.length ? <span>{post.likesCount.length}</span> : null}
     </Button>
   );
