@@ -4,7 +4,7 @@ import PostCard from "@/components/post-card";
 import { Button } from "@/components/ui/button";
 import { api } from "@/convex/_generated/api";
 import { useStoreUserEffect } from "@/hooks/useStoreUserEffect";
-import { usePaginatedQuery, useQuery } from "convex/react";
+import { usePaginatedQuery } from "convex/react";
 import { Loader2 } from "lucide-react";
 
 export default function Feed() {
