@@ -19,7 +19,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Button } from "../ui/button";
-import { Send } from "lucide-react";
+import { Globe2, Lock, Send, Users2 } from "lucide-react";
 export const postSchema = z.object({
   message: z.string().trim().min(1, "Message is required"),
   privacy: z.enum(["public", "private", "friends"]),
@@ -57,31 +57,45 @@ export default function AddPostForm() {
             </FormItem>
           )}
         />
-        <FormField
-          control={form.control}
-          name="privacy"
-          render={({ field }) => (
-            <FormItem className="ml-auto mr-0">
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
-                <FormControl>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select a verified email to display" />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  <SelectItem value="public">public</SelectItem>
-                  <SelectItem value="private">private</SelectItem>
-                  <SelectItem value="friends">friends</SelectItem>
-                </SelectContent>
-              </Select>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <Button disabled={form.formState.isSubmitting} type="submit">
-          <Send />
-          Post
-        </Button>
+        <div className="flex gap-4 flex-wrap justify-between">
+          <FormField
+            control={form.control}
+            name="privacy"
+            render={({ field }) => (
+              <FormItem>
+                <Select
+                  onValueChange={field.onChange}
+                  defaultValue={field.value}
+                >
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select a verified email to display" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    <SelectItem value="public">
+                      <Globe2 />
+                      Public
+                    </SelectItem>
+                    <SelectItem value="private">
+                      <Lock />
+                      Private
+                    </SelectItem>
+                    <SelectItem value="friends">
+                      <Users2 />
+                      Friends
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <Button disabled={form.formState.isSubmitting} type="submit">
+            <Send />
+            Post
+          </Button>
+        </div>
       </form>
     </Form>
   );

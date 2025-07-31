@@ -18,6 +18,9 @@ import {
   Ellipsis,
   Trash2,
   Pencil,
+  Globe2,
+  Lock,
+  Users2,
 } from "lucide-react";
 export default function Feed() {
   const { isAuthenticated } = useStoreUserEffect();
@@ -31,14 +34,25 @@ export default function Feed() {
           key={post._id}
           className="flex flex-col gap-4 bg-muted/25 rounded-md p-4"
         >
-          <div className="flex place-items-start justify-between  text-muted-foreground">
-            <div className="flex gap-4 items-start">
+          <div className="flex place-items-start justify-between  text-muted-foreground gap-2">
+            <div className="flex gap-2 items-start truncate">
               <UserCircle2 className="size-10 shrink-0 text-foreground" />
-              <div className="font-semibold space-y-1 truncate">
-                <p className="text-sm ">{post.user?.username}</p>
-                <p className="text-xs">
-                  {new Date(post._creationTime).toLocaleDateString()}
-                </p>
+              <div className="space-y-1 inline-flex flex-col">
+                <span className="text-sm font-semibold">
+                  {post.user?.username}
+                </span>
+                <div className="text-xs space-x-1 inline-flex">
+                  <span>
+                    {post.privacy === "public" && <Globe2 className="size-4" />}
+                    {post.privacy === "private" && <Lock className="size-4" />}
+                    {post.privacy === "friends" && (
+                      <Users2 className="size-4" />
+                    )}
+                  </span>
+                  <span>
+                    {new Date(post._creationTime).toLocaleDateString()}
+                  </span>
+                </div>
               </div>
             </div>
             <DropdownMenu>

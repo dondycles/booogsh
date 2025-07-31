@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { SignedIn, SignedOut, SignInButton, UserButton } from "@clerk/nextjs";
+import Link from "next/link";
 
 export default function Home() {
   return (
@@ -15,21 +16,28 @@ export default function Home() {
           </Button>
         </SignedOut>
         <SignedIn>
-          <UserButton
-            showName
-            appearance={{
-              elements: {
-                userButtonOuterIdentifier: {
-                  color: "var(--muted-foreground)",
+          <div className="flex gap-4 justify-center items-center">
+            <Button asChild>
+              <Link href="/feed">Go to feed</Link>
+            </Button>
+            <UserButton
+              showName
+              appearance={{
+                elements: {
+                  userButtonOuterIdentifier: {
+                    color: "var(--muted-foreground)",
+                    padding: 0,
+                  },
+                  userButtonTrigger: {
+                    backgroundColor: "var(--muted)",
+                    color: "var(--muted-foreground)",
+                    padding: "4px 16px",
+                    borderRadius: "var(--radius)",
+                  },
                 },
-                userButtonTrigger: {
-                  backgroundColor: "var(--muted)",
-                  color: "var(--muted-foreground)",
-                  padding: "0.5rem 1rem",
-                },
-              },
-            }}
-          />
+              }}
+            />
+          </div>
         </SignedIn>
       </div>
     </main>
