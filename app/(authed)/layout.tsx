@@ -21,7 +21,10 @@ export default function AuthedLayout({
         <div className="flex items-center justify-between gap-4 max-w-xl mx-auto p-4 h-full">
           <p className="font-semibold text-sm">booog.sh</p>
           <SignedIn>
-            <CustomUserButton className="h-9" />
+            <CustomUserButton
+              className="h-9 p-0 rounded-full"
+              showName={false}
+            />
           </SignedIn>
           <SignedOut>
             <Button asChild>
@@ -30,9 +33,9 @@ export default function AuthedLayout({
           </SignedOut>
         </div>
       </header>
-      <div className="grid grid-cols-[1fr_minmax(0px,576px)_1fr] bg-background text-foreground relative">
+      <div className="grid lg:grid-cols-[1fr_minmax(0px,576px)_1fr] bg-background text-foreground relative">
         <SignedIn>
-          <div className="fixed bottom-0 left-0 h-[calc(100vh-60px)] w-[calc((100vw-590px)/2)] flex flex-col p-2 sm:p-4 ">
+          <div className="not-lg:hidden fixed bottom-0 left-0 h-[calc(100vh-60px)] w-[calc((100vw-590px)/2)] flex flex-col p-2 sm:p-4 ">
             <CustomUserButton
               asLink
               className="flex-row-reverse justify-end text-base font-semibold"
@@ -65,7 +68,7 @@ export default function AuthedLayout({
         </SignedIn>
         {children}
         <SignedIn>
-          <div className="fixed bottom-0 right-0 h-[calc(100vh-60px)] w-[calc((100vw-590px)/2)] flex flex-col p-2 sm:p-4 ">
+          <div className="not-lg:hidden fixed bottom-0 right-0 h-[calc(100vh-60px)] w-[calc((100vw-590px)/2)] flex flex-col p-2 sm:p-4 ">
             <div className="border-b pb-2 inline-flex items-center justify-between gap-2">
               <div className="font-semibold text-muted-foreground inline-flex truncate">
                 <span>

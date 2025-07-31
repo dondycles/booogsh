@@ -26,6 +26,7 @@ export default function CustomUserButton({
   className,
   variant = "ghost",
   asLink = false,
+  showName = true,
 }: {
   className?: string;
   variant?:
@@ -38,6 +39,7 @@ export default function CustomUserButton({
     | null
     | undefined;
   asLink?: boolean;
+  showName?: boolean;
 }) {
   const { setTheme, theme } = useTheme();
   const { user, isLoading } = useStoreUserEffect();
@@ -50,7 +52,7 @@ export default function CustomUserButton({
           className,
         )}
       >
-        <Skeleton className="w-20 h-4" />
+        {showName ? <Skeleton className="w-20 h-4" /> : null}
         <span>
           <UserCircle2 className="size-8 shrink-0  animate-pulse" />
         </span>
@@ -64,7 +66,7 @@ export default function CustomUserButton({
         asChild
       >
         <Link href={`/u/${user?.username}`} className="flex items-center gap-2">
-          <p>{user?.username}</p>
+          {showName ? <p>{user?.username}</p> : null}
           {user?.pfp ? (
             <Image
               src={user?.pfp}
@@ -87,7 +89,7 @@ export default function CustomUserButton({
             variant={variant}
             className={cn("flex flex-row gap-2 h-fit", className)}
           >
-            <p>{user?.username}</p>
+            {showName ? <p>{user?.username}</p> : null}
             {user?.pfp ? (
               <Image
                 src={user?.pfp}
