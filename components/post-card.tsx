@@ -3,11 +3,11 @@ import {
   Ellipsis,
   EyeOff,
   Globe2,
+  Heart,
   Lock,
-  MessageCircle,
+  MessageSquare,
   Pencil,
   Share2,
-  ThumbsUpIcon,
   Trash2,
   UserCircle2,
   Users2,
@@ -76,15 +76,13 @@ export default function PostCard({ post, currentUser }: PostCardProps) {
           variant="secondary"
           className=" text-muted-foreground rounded-none truncate"
         >
-          <MessageCircle />
-          <span>Comment</span>
+          <MessageSquare />
         </Button>
         <Button
           variant="secondary"
           className=" text-muted-foreground rounded-l-none truncate"
         >
           <Share2 />
-          <span>Share</span>
         </Button>
       </div>
     </div>
@@ -117,10 +115,10 @@ function PostOptions({ post, currentUser }: PostCardProps) {
   );
 }
 
-function LikeButton({ post }: PostCardProps) {
+function LikeButton({ post, currentUser }: PostCardProps) {
   const handleToggleLikePost = useMutation(api.posts.toggleLike);
   const isLiked = post.likesCount.some(
-    (like) => like.userId === post.user?._id,
+    (like) => like.userId === currentUser?._id,
   );
   return (
     <Button
@@ -128,14 +126,11 @@ function LikeButton({ post }: PostCardProps) {
       variant="secondary"
       className=" text-muted-foreground rounded-r-none truncate"
     >
-      <ThumbsUpIcon
+      <Heart
         className={`${isLiked ? "text-foreground fill-foreground" : "text-muted-foreground"} `}
       />
-      <span>
-        {" "}
-        {isLiked ? "Unlike" : "Like"}{" "}
-        {post.likesCount.length ? `(${post.likesCount.length})` : null}
-      </span>
+
+      {post.likesCount.length ? <span>{post.likesCount.length}</span> : null}
     </Button>
   );
 }
