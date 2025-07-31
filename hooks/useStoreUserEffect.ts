@@ -15,12 +15,15 @@ export function useStoreUserEffect() {
       return;
     }
 
+    console.log(user);
+
     async function createUser() {
       const userData = await storeUser({
         info: {
           email: user?.primaryEmailAddress?.emailAddress ?? "",
           name: user?.fullName ?? "Anonymous",
           username: user?.username ?? "",
+          pfp: user?.imageUrl ?? "",
         },
       });
       setUserDb(userData);
@@ -39,6 +42,7 @@ export function useStoreUserEffect() {
     user?.primaryEmailAddress,
     user?.fullName,
     user?.username,
+    user?.imageUrl,
   ]);
 
   return {

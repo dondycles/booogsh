@@ -7,32 +7,36 @@ export const checkAndGetUser = mutation({
       name: v.string(),
       email: v.string(),
       username: v.string(),
+      pfp: v.optional(v.string()),
     }),
   },
-  handler: async (ctx, { info: { email, name, username } }) => {
+  handler: async (ctx, { info: { email, name, username, pfp } }) => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) {
       throw new Error("Called storeUser without authentication present");
     }
 
-    const userData = await ctx.db
+    const userDbData = await ctx.db
       .query("users")
       .withIndex("by_token", (q) =>
         q.eq("tokenIdentifier", identity.tokenIdentifier),
       )
       .unique();
 
-    if (userData !== null) {
-      if (name !== userData.name) {
-        await ctx.db.patch(userData._id, { name });
+    if (userDbData !== null) {
+      if (name !== userDbData.name) {
+        await ctx.db.patch(userDbData._id, { name });
       }
-      if (email !== userData.email) {
-        await ctx.db.patch(userData._id, { email });
+      if (email !== userDbData.email) {
+        await ctx.db.patch(userDbData._id, { email });
       }
-      if (username !== userData.username) {
-        await ctx.db.patch(userData._id, { username });
+      if (username !== userDbData.username) {
+        await ctx.db.patch(userDbData._id, { username });
       }
-      return userData;
+      if (pfp !== userDbData.pfp) {
+        await ctx.db.patch(userDbData._id, { pfp: identity.pictureUrl });
+      }
+      return userDbData;
     }
 
     const newUserId = await ctx.db.insert("users", {
@@ -40,6 +44,7 @@ export const checkAndGetUser = mutation({
       email,
       username,
       tokenIdentifier: identity.tokenIdentifier,
+      pfp: identity.pictureUrl,
     });
     return await ctx.db
       .query("users")

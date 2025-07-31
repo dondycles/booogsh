@@ -15,11 +15,17 @@ export default defineSchema({
     ),
     lastUpdate: v.optional(v.string()),
   }).index("byUser", ["userId"]),
-
   users: defineTable({
     name: v.string(),
     email: v.string(),
     username: v.string(),
     tokenIdentifier: v.string(),
+    pfp: v.optional(v.string()),
   }).index("by_token", ["tokenIdentifier"]),
+  likes: defineTable({
+    postId: v.id("posts"),
+    userId: v.id("users"),
+  })
+    .index("byPostAndUser", ["postId", "userId"])
+    .index("byPost", ["postId"]),
 });

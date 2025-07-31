@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/select";
 import { Button } from "../ui/button";
 import { Globe2, Lock, Send, Users2 } from "lucide-react";
+import { toast } from "sonner";
 export const postSchema = z.object({
   message: z.string().trim().min(1, "Message is required"),
   privacy: z.enum(["public", "private", "friends"]),
@@ -35,14 +36,20 @@ export default function AddPostForm() {
   });
 
   const handleAddPost = useMutation(api.posts.add);
+
   return (
     <Form {...form}>
       <form
         onSubmit={form.handleSubmit(async (data) => {
+          toast.loading("Adding post...", { id: data.message });
           const res = await handleAddPost(data);
+          toast.dismiss(data.message);
           if (res) {
+            toast.success("Post added successfully!");
             form.reset();
+            return;
           }
+          toast.warning("Post could not be added. Please try again.");
         })}
         className="flex flex-col gap-4 bg-muted/25 rounded-md p-4"
       >

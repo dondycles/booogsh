@@ -1,35 +1,47 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
+import { paginationOptsValidator } from "convex/server";
+
 export const getPublicPosts = query({
-  args: {},
-  handler: async (ctx) => {
+  args: { paginationOpts: paginationOptsValidator },
+  handler: async (ctx, args) => {
     const user = await ctx.auth.getUserIdentity();
-    const userId = await ctx.db
+    const userDbData = await ctx.db
       .query("users")
       .withIndex("by_token", (q) =>
         q.eq("tokenIdentifier", user?.tokenIdentifier!),
       )
       .unique();
-    const posts = await ctx.db
+    const results = await ctx.db
       .query("posts")
       .filter((q) =>
         q.or(
           q.eq(q.field("privacy"), "public"),
-          q.eq(q.field("userId"), userId?._id),
+          q.eq(q.field("userId"), userDbData?._id),
         ),
       )
       .order("desc")
-      .collect();
+      .paginate(args.paginationOpts);
 
-    return Promise.all(
-      posts.map(async (post) => {
+    const mappedPage = await Promise.all(
+      results.page.map(async (post) => {
         const user = await ctx.db.get(post.userId);
+        const likesCount = await ctx.db
+          .query("likes")
+          .withIndex("byPost", (q) => q.eq("postId", post._id))
+          .collect();
         return {
           ...post,
           user,
+          likesCount,
         };
       }),
     );
+
+    return {
+      ...results,
+      page: mappedPage,
+    };
   },
 });
 
@@ -63,21 +75,89 @@ export const add = mutation({
       throw new Error("You must be signed to post.");
     }
 
-    const userId = await ctx.db
+    const userDbData = await ctx.db
       .query("users")
       .withIndex("by_token", (q) =>
         q.eq("tokenIdentifier", user.tokenIdentifier),
       )
       .unique();
 
-    if (!userId) {
+    if (!userDbData) {
       throw new Error("No user found with the provided token identifier.");
     }
 
     return await ctx.db.insert("posts", {
       message: args.message,
       privacy: args.privacy,
-      userId: userId?._id,
+      userId: userDbData?._id,
     });
+  },
+});
+
+export const remove = mutation({
+  args: { postId: v.id("posts") },
+  handler: async (ctx, { postId }) => {
+    const user = await ctx.auth.getUserIdentity();
+    if (!user) {
+      throw new Error("You must be signed in to delete a post.");
+    }
+
+    const userDbData = await ctx.db
+      .query("users")
+      .withIndex("by_token", (q) =>
+        q.eq("tokenIdentifier", user.tokenIdentifier),
+      )
+      .unique();
+
+    if (!userDbData) {
+      throw new Error("No user found with the provided token identifier.");
+    }
+
+    const post = await ctx.db.get(postId);
+    if (!post) {
+      throw new Error("Post not found.");
+    }
+
+    if (post.userId !== userDbData._id) {
+      throw new Error("You are not authorized to delete this post.");
+    }
+    await ctx.db.delete(postId);
+  },
+});
+
+export const toggleLike = mutation({
+  args: { postId: v.id("posts") },
+  handler: async (ctx, { postId }) => {
+    const user = await ctx.auth.getUserIdentity();
+    if (!user) {
+      throw new Error("You must be signed in to like a post.");
+    }
+
+    const userDbData = await ctx.db
+      .query("users")
+      .withIndex("by_token", (q) =>
+        q.eq("tokenIdentifier", user.tokenIdentifier),
+      )
+      .unique();
+
+    if (!userDbData) {
+      throw new Error("No user found with the provided token identifier.");
+    }
+
+    const like = await ctx.db
+      .query("likes")
+      .withIndex("byPostAndUser", (q) =>
+        q.eq("postId", postId).eq("userId", userDbData._id),
+      )
+      .unique();
+
+    if (like) {
+      await ctx.db.delete(like._id);
+    } else {
+      await ctx.db.insert("likes", {
+        postId,
+        userId: userDbData._id,
+      });
+    }
   },
 });
