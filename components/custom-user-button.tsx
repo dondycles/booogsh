@@ -1,5 +1,5 @@
 "use client";
-import { UserButton, UserProfile } from "@clerk/nextjs";
+import { UserProfile } from "@clerk/nextjs";
 import { Moon, Sun, UserCircle2, UserCog2 } from "lucide-react";
 import { useTheme } from "next-themes";
 import {
@@ -40,7 +40,7 @@ export default function CustomUserButton({
   asLink?: boolean;
 }) {
   const { setTheme, theme } = useTheme();
-  const { user, isAuthenticated, isLoading } = useStoreUserEffect();
+  const { user, isLoading } = useStoreUserEffect();
   if (isLoading)
     return (
       <Button
