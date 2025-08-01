@@ -14,7 +14,7 @@ export function useStoreUserEffect() {
     if (!isSignedIn) {
       return () => {
         setUserDb(null);
-        setIsLoadingUserDb(true);
+        setIsLoadingUserDb(false);
       };
     }
 

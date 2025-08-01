@@ -18,7 +18,7 @@ export default function Feed() {
     status: postsStatus,
   } = usePaginatedQuery(api.posts.getPublicPosts, {}, { initialNumItems: 5 });
 
-  const isLoadingAll = postsStatus === "LoadingFirstPage";
+  const isLoadingAll = isLoading || postsStatus === "LoadingFirstPage";
 
   return (
     <main className="p-2 sm:p-4 flex flex-col gap-2 sm:gap-4 max-w-xl w-full mx-auto lg:col-start-2">
