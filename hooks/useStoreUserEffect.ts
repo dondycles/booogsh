@@ -12,10 +12,11 @@ export function useStoreUserEffect() {
 
   useEffect(() => {
     if (!isSignedIn) {
-      return;
+      return () => {
+        setUserDb(null);
+        setIsLoadingUserDb(true);
+      };
     }
-
-    console.log(user);
 
     async function createUser() {
       const userData = await storeUser({

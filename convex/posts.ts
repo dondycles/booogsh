@@ -8,12 +8,39 @@ export const getPublicPosts = query({
   },
   handler: async (ctx, args) => {
     const user = await ctx.auth.getUserIdentity();
-    const userDbData = await ctx.db
-      .query("users")
-      .withIndex("by_token", (q) =>
-        q.eq("tokenIdentifier", user?.tokenIdentifier!),
-      )
-      .unique();
+    const userDbData = user
+      ? await ctx.db
+          .query("users")
+          .withIndex("by_token", (q) =>
+            q.eq("tokenIdentifier", user.tokenIdentifier),
+          )
+          .unique()
+      : null;
+
+    if (!userDbData) {
+      const results = await ctx.db
+        .query("posts")
+        .filter((q) => q.eq(q.field("privacy"), "public"))
+        .order("desc")
+        .paginate(args.paginationOpts);
+
+      const mappedPage = await Promise.all(
+        results.page.map(async (post) => {
+          const user = await ctx.db.get(post.userId);
+          return {
+            ...post,
+            user,
+            isLiked: false,
+          };
+        }),
+      );
+
+      return {
+        ...results,
+        page: mappedPage,
+      };
+    }
+
     const results = await ctx.db
       .query("posts")
       .filter((q) =>
@@ -65,6 +92,16 @@ export const getPublicPostComments = query({
       throw new Error("This post is not public.");
     }
 
+    const user = await ctx.auth.getUserIdentity();
+    const userDbData = user
+      ? await ctx.db
+          .query("users")
+          .withIndex("by_token", (q) =>
+            q.eq("tokenIdentifier", user.tokenIdentifier),
+          )
+          .unique()
+      : null;
+
     const results = await ctx.db
       .query("comments")
       .withIndex("byPost", (q) => q.eq("postId", postId))
@@ -73,10 +110,14 @@ export const getPublicPostComments = query({
 
     const mappedPage = await Promise.all(
       results.page.map(async (comment) => {
-        const user = await ctx.db.get(comment.userId);
+        const commenter = await ctx.db.get(comment.userId);
+        const isMyComment = userDbData
+          ? userDbData._id === comment.userId
+          : false;
         return {
           ...comment,
-          user,
+          user: commenter,
+          isMyComment,
         };
       }),
     );
@@ -194,7 +235,7 @@ export const toggleLike = mutation({
   handler: async (ctx, { postId }) => {
     const user = await ctx.auth.getUserIdentity();
     if (!user) {
-      throw new Error("You must be signed in to like a post.");
+      return "You must be signed in to like a post.";
     }
 
     const userDbData = await ctx.db
@@ -205,13 +246,13 @@ export const toggleLike = mutation({
       .unique();
 
     if (!userDbData) {
-      throw new Error("No user found with the provided token identifier.");
+      return "No user found with the provided token identifier.";
     }
 
     const post = await ctx.db.get(postId);
 
     if (!post) {
-      throw new Error("Post not found.");
+      return "Post not found.";
     }
 
     const like = await ctx.db
@@ -225,16 +266,17 @@ export const toggleLike = mutation({
       await ctx.db.patch(post._id, {
         likesCount: post.likesCount ? post.likesCount - 1 : 0,
       });
-      return await ctx.db.delete(like._id);
+      await ctx.db.delete(like._id);
     } else {
       await ctx.db.patch(post._id, {
         likesCount: post.likesCount ? post.likesCount + 1 : 1,
       });
-      return await ctx.db.insert("likes", {
+      await ctx.db.insert("likes", {
         postId,
         userId: userDbData._id,
       });
     }
+    return true;
   },
 });
 
@@ -243,7 +285,7 @@ export const addComment = mutation({
   handler: async (ctx, { postId, content }) => {
     const user = await ctx.auth.getUserIdentity();
     if (!user) {
-      throw new Error("You must be signed in to like a post.");
+      return "You must be signed in to like a post.";
     }
 
     const userDbData = await ctx.db
@@ -254,23 +296,28 @@ export const addComment = mutation({
       .unique();
 
     if (!userDbData) {
-      throw new Error("No user found with the provided token identifier.");
+      return "No user found with the provided token identifier.";
     }
 
     const post = await ctx.db.get(postId);
     if (!post) {
-      throw new Error("Post not found.");
+      return "Post not found.";
     }
 
     await ctx.db.patch(post._id, {
       commentsCount: post.commentsCount ? post.commentsCount + 1 : 1,
     });
 
-    return await ctx.db.insert("comments", {
+    const res = await ctx.db.insert("comments", {
       content: content,
       postId: postId,
       userId: userDbData._id,
     });
+
+    if (!res) {
+      return "Failed to add comment.";
+    }
+    return true;
   },
 });
 
@@ -279,7 +326,7 @@ export const removeComment = mutation({
   handler: async (ctx, { commentId, postId }) => {
     const user = await ctx.auth.getUserIdentity();
     if (!user) {
-      throw new Error("You must be signed in to remove a comment.");
+      return "You must be signed in to remove a comment.";
     }
 
     const userDbData = await ctx.db
@@ -290,32 +337,29 @@ export const removeComment = mutation({
       .unique();
 
     if (!userDbData) {
-      throw new Error("No user found with the provided token identifier.");
+      return "No user found with the provided token identifier.";
     }
 
     const comment = await ctx.db.get(commentId);
     if (!comment) {
-      throw new Error("Comment not found.");
+      return "Comment not found.";
     }
 
     const post = await ctx.db.get(postId);
     if (!post) {
-      throw new Error("Post not found.");
-    }
-    if (comment.userId !== userDbData._id) {
-      throw new Error("You are not authorized to delete this comment.");
+      return "Post not found.";
     }
 
-    if (post.userId !== userDbData._id) {
-      throw new Error(
-        "You are not authorized to delete comments on this post.",
-      );
+    if (comment.userId !== userDbData._id && post.userId !== userDbData._id) {
+      return "You are not authorized to delete this comment.";
     }
 
     await ctx.db.patch(post._id, {
       commentsCount: post.commentsCount ? post.commentsCount - 1 : 0,
     });
 
-    return await ctx.db.delete(commentId);
+    await ctx.db.delete(commentId);
+
+    return true;
   },
 });

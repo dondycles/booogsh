@@ -139,10 +139,14 @@ function PostOptions({ post, currentUser }: PostCardProps) {
 }
 
 function LikeButton({ post }: PostCardProps) {
-  const handleToggleLikePost = useMutation(api.posts.toggleLike);
+  const toggleLikePost = useMutation(api.posts.toggleLike);
+  const handleToggleLikePost = async () => {
+    const res = await toggleLikePost({ postId: post._id });
+    if (res !== true) return toast.error(res);
+  };
   return (
     <Button
-      onClick={() => handleToggleLikePost({ postId: post._id })}
+      onClick={() => void handleToggleLikePost()}
       variant="ghost"
       className=" text-muted-foreground rounded-none rounded-bl-md truncate h-full"
     >
@@ -170,23 +174,17 @@ function CommentForm({ post }: PostCardProps) {
     },
   });
 
-  const handleAddComment = useMutation(api.posts.addComment);
-
+  const addComment = useMutation(api.posts.addComment);
+  const handleAddComment = async (data: z.infer<typeof commentSchema>) => {
+    const res = await addComment(data);
+    if (res !== true) return toast.error(res);
+    form.reset();
+  };
   return (
     <Form {...form}>
       <form
         className="flex flex-row gap-2 sm:gap-4"
-        onSubmit={form.handleSubmit(async (data) => {
-          toast.loading("Adding comment...", { id: data.content });
-          const res = await handleAddComment(data);
-          toast.dismiss(data.content);
-          if (res) {
-            toast.success("Comment added successfully!");
-            form.reset();
-            return;
-          }
-          toast.warning("Comment could not be added. Please try again.");
-        })}
+        onSubmit={form.handleSubmit(handleAddComment)}
       >
         <FormField
           name="content"
@@ -285,10 +283,19 @@ function PostDialog({
 function CommentCard({
   comment,
   postId,
-}: { comment: Doc<"comments"> & { user: Doc<"users"> | null } } & {
+}: {
+  comment: Doc<"comments"> & {
+    user: Doc<"users"> | null;
+    isMyComment: boolean;
+  };
+} & {
   postId: Id<"posts">;
 }) {
-  const handleRemoveComment = useMutation(api.posts.removeComment);
+  const removeComment = useMutation(api.posts.removeComment);
+  const handleRemoveComment = async () => {
+    const res = await removeComment({ commentId: comment._id, postId });
+    if (res !== true) return toast.error(res);
+  };
   return (
     <div
       key={comment._id}
@@ -297,21 +304,22 @@ function CommentCard({
       <Avatar user={comment.user} size={32} />
       <div className="text-sm flex-1 space-y-1">
         <p className="text-muted-foreground whitespace-pre-wrap">
-          {comment.user?.username}
+          {comment.userId}
         </p>
         <p>{comment.content}</p>
         <div className="text-xs flex flex-wrap-reverse gap-x-4 gap-y-2 justify-between text-muted-foreground mt-3">
           <div className="flex gap-4 truncate">
             <button className="truncate">Like</button>
             <button className="truncate">Reply</button>
-            <button className="truncate text-yellow-600">Edit</button>
             <button
-              onClick={() =>
-                handleRemoveComment({
-                  commentId: comment._id,
-                  postId: postId,
-                })
-              }
+              hidden={!comment.isMyComment}
+              className="truncate text-yellow-600"
+            >
+              Edit
+            </button>
+            <button
+              hidden={!comment.isMyComment}
+              onClick={() => void handleRemoveComment()}
               className="truncate text-destructive"
             >
               Remove
