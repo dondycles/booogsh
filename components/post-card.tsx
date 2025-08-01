@@ -203,6 +203,7 @@ function CommentForm({ post }: PostCardProps) {
           disabled={form.formState.isSubmitting}
           type="submit"
           className="ml-auto mr-0"
+          size="icon"
         >
           <Send />
         </Button>
@@ -232,10 +233,10 @@ function PostDialog({
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent
         showCloseButton={false}
-        className=" max-w-xl sm:max-w-xl p-0 overflow-hidden"
+        className=" max-w-xl sm:max-w-xl p-2 sm:p-4 bg-transparent overflow-hidden border-0 shadow-none"
       >
         <ScrollArea>
-          <div className="flex flex-col gap-2 sm:gap-4  h-[75dvh] relative">
+          <div className="flex flex-col gap-2 sm:gap-4 h-[75dvh] relative backdrop-blur  bg-background/50 rounded-md border">
             <DialogHeader className="sr-only">
               <DialogTitle>Comments</DialogTitle>
             </DialogHeader>
@@ -271,7 +272,7 @@ function PostDialog({
               </div>
             ) : null}
 
-            <div className="sticky bottom-0 left-0 right-0 bg-muted p-2 sm:p-4 rounded-b-md mb-0 mt-auto border-t">
+            <div className="sticky bottom-0 left-0 right-0 bg-muted rounded-b-md mb-0 mt-auto border-t p-2 sm:p-4">
               <CommentForm currentUser={currentUser} post={post} />
             </div>
           </div>
