@@ -14,6 +14,8 @@ export default defineSchema({
       v.literal("friends"),
     ),
     lastUpdate: v.optional(v.string()),
+    likesCount: v.optional(v.number()),
+    commentsCount: v.optional(v.number()),
   }).index("byUser", ["userId"]),
   users: defineTable({
     name: v.string(),
@@ -28,4 +30,9 @@ export default defineSchema({
   })
     .index("byPostAndUser", ["postId", "userId"])
     .index("byPost", ["postId"]),
+  comments: defineTable({
+    content: v.string(),
+    postId: v.id("posts"),
+    userId: v.id("users"),
+  }).index("byPost", ["postId"]),
 });

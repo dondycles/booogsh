@@ -112,7 +112,7 @@ export default function CustomUserButton({
           </DropdownMenuItem>
           <DialogTrigger asChild>
             <DropdownMenuItem>
-              <UserCog2 /> Settings
+              <UserCog2 /> User Settings
             </DropdownMenuItem>
           </DialogTrigger>
         </DropdownMenuContent>
