@@ -17,7 +17,7 @@ export default function AuthedLayout({
 }) {
   return (
     <div className="flex flex-col relative">
-      <header className="bg-muted w-full sticky top-0 z-100 h-[60px]">
+      <header className="bg-muted w-full sticky top-0 h-[60px] z-1 border-b">
         <div className="flex items-center justify-between gap-4 max-w-xl mx-auto p-4 h-full">
           <p className="font-semibold text-sm">booog.sh</p>
           <SignedIn>
@@ -33,7 +33,7 @@ export default function AuthedLayout({
           </SignedOut>
         </div>
       </header>
-      <div className="grid lg:grid-cols-[1fr_minmax(0px,576px)_1fr] bg-background text-foreground relative">
+      <div className="grid lg:grid-cols-[1fr_minmax(0px,576px)_1fr] bg-background text-foreground relative z-0">
         <SignedIn>
           <div className="not-lg:hidden fixed bottom-0 left-0 h-[calc(100vh-60px)] w-[calc((100vw-590px)/2)] flex flex-col p-2 sm:p-4 ">
             <CustomUserButton
