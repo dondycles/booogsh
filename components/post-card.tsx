@@ -227,8 +227,6 @@ function PostDialog({
     { initialNumItems: 6 },
   );
 
-  const isLoadingAll = commentsStatus === "LoadingFirstPage";
-
   return (
     <Dialog>
       <DialogTrigger asChild>{children}</DialogTrigger>
