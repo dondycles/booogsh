@@ -37,6 +37,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import Avatar from "./avatar";
 import { ScrollArea } from "./ui/scroll-area";
 import { cn } from "@/lib/utils";
+import ConfirmDialog from "./comfirm-dialog";
 export const commentSchema = z.object({
   postId: z.custom<Id<"posts">>(),
   content: z.string().min(1).max(500),
@@ -89,20 +90,21 @@ export default function PostCard({
         {post.message}
       </h1>
 
-      <div className="grid grid-cols-3 gap-px mt-4 h-10 bg-accent/30 rounded-b-md">
+      <div className="flex [&>*]:flex-1 gap-px mt-4 h-10 bg-accent/30 rounded-b-md">
         <LikeButton currentUser={currentUser} post={post} />
-        <PostDialog post={post} currentUser={currentUser}>
-          <Button
-            variant="ghost"
-            className=" text-muted-foreground rounded-none truncate h-full"
-            disabled={isDisabledComments}
-          >
-            <span>
-              <MessageSquare />
-            </span>
-            {post.commentsCount ? <span>{post.commentsCount}</span> : null}
-          </Button>
-        </PostDialog>
+        {isDisabledComments ? null : (
+          <PostDialog post={post} currentUser={currentUser}>
+            <Button
+              variant="ghost"
+              className=" text-muted-foreground rounded-none truncate h-full"
+            >
+              <span>
+                <MessageSquare />
+              </span>
+              {post.commentsCount ? <span>{post.commentsCount}</span> : null}
+            </Button>
+          </PostDialog>
+        )}
         <Button
           variant="ghost"
           className=" text-muted-foreground rounded-none  rounded-br-md truncate  h-full"
@@ -244,7 +246,7 @@ function PostDialog({
               className="rounded-b-none border-b"
             />
             <p className="text-sm sm:text-base font-semibold text-muted-foreground px-2 sm:px-4">
-              Comments
+              Comments {post.commentsCount ? `(${post.commentsCount})` : null}
             </p>
             {comments.length ? (
               <div className="flex flex-col gap-2 sm:gap-4 px-2 sm:px-4">
@@ -286,6 +288,7 @@ function CommentCard({
   comment: Doc<"comments"> & {
     user: Doc<"users"> | null;
     isMyComment: boolean;
+    isMyPost: boolean;
     isLiked: boolean;
   };
 } & {
@@ -322,13 +325,18 @@ function CommentCard({
             <button hidden={!comment.isMyComment} className="text-yellow-600">
               Edit
             </button>
-            <button
-              hidden={!comment.isMyComment}
-              onClick={() => void handleRemoveComment()}
-              className="text-destructive"
+            <ConfirmDialog
+              title="Remove Comment"
+              description="Are you sure you want to remove this comment? This action cannot be undone."
+              confirm={() => void handleRemoveComment()}
             >
-              Remove
-            </button>
+              <button
+                hidden={!comment.isMyComment && !comment.isMyPost}
+                className="text-destructive"
+              >
+                Remove
+              </button>
+            </ConfirmDialog>
           </div>
           <p className="text-xs">
             {new Date(comment._creationTime).toLocaleDateString()}

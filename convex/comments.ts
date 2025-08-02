@@ -34,6 +34,7 @@ export const getPublicPostComments = query({
     const mappedPage = await Promise.all(
       results.page.map(async (comment) => {
         const commenter = await ctx.db.get(comment.userId);
+        const isMyPost = userDbData ? userDbData._id === post.userId : false;
         const isMyComment = userDbData
           ? userDbData._id === comment.userId
           : false;
@@ -51,6 +52,7 @@ export const getPublicPostComments = query({
           user: commenter,
           isMyComment,
           isLiked: !!isLiked,
+          isMyPost: !!isMyPost,
         };
       }),
     );
