@@ -16,7 +16,7 @@ export default function Avatar({
       width={size}
       height={size}
       quality={50}
-      className="rounded-full"
+      className="rounded-full size-fit"
     />
   ) : (
     <UserCircle2 className="size-10 shrink-0 text-foreground" />

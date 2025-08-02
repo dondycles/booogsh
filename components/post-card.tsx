@@ -1,5 +1,6 @@
 import { Doc, Id } from "@/convex/_generated/dataModel";
 import {
+  CornerDownRight,
   Ellipsis,
   EyeOff,
   Globe2,
@@ -9,6 +10,7 @@ import {
   Pencil,
   Send,
   Share2,
+  Text,
   Trash2,
   Users2,
 } from "lucide-react";
@@ -38,12 +40,17 @@ import Avatar from "./avatar";
 import { ScrollArea } from "./ui/scroll-area";
 import { cn } from "@/lib/utils";
 import ConfirmDialog from "./comfirm-dialog";
-import { useState } from "react";
+import React, { useState } from "react";
 export const commentSchema = z.object({
   postId: z.custom<Id<"posts">>(),
+  commentId: z.optional(z.custom<Id<"postComments">>()),
   content: z.string().min(1).max(500),
 });
-
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 interface PostCardProps {
   post: Doc<"posts"> & {
     user: Doc<"users"> | null;
@@ -188,16 +195,23 @@ function LikeButton({ post }: PostCardProps) {
   );
 }
 
-function CommentForm({ post }: PostCardProps) {
+function CommentForm({
+  post,
+  currentUser,
+  comment,
+}: PostCardProps & {
+  comment?: Doc<"postComments"> | null;
+}) {
   const form = useForm<z.infer<typeof commentSchema>>({
     resolver: zodResolver(commentSchema),
     defaultValues: {
       content: "",
       postId: post._id,
+      commentId: comment?._id,
     },
   });
 
-  const addComment = useMutation(api.comments.add);
+  const addComment = useMutation(api.postComments.add);
   const handleAddComment = async (data: z.infer<typeof commentSchema>) => {
     const res = await addComment(data);
     if (res !== true) return toast.error(res);
@@ -206,28 +220,31 @@ function CommentForm({ post }: PostCardProps) {
   return (
     <Form {...form}>
       <form
-        className="flex flex-row gap-2 sm:gap-4"
+        className="flex gap-2 flex-1"
         onSubmit={form.handleSubmit(handleAddComment)}
       >
-        <FormField
-          name="content"
-          render={({ field }) => (
-            <FormItem className="flex-1">
-              <FormControl>
-                <Textarea {...field} placeholder="Add a comment..." />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <Button
-          disabled={form.formState.isSubmitting}
-          type="submit"
-          className="ml-auto mr-0"
-          size="icon"
-        >
-          <Send />
-        </Button>
+        <Avatar user={currentUser} size={32} />
+        <div className="flex flex-row gap-2 flex-1">
+          <FormField
+            name="content"
+            render={({ field }) => (
+              <FormItem className="flex-1">
+                <FormControl>
+                  <Textarea {...field} placeholder="Add a comment..." />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <Button
+            disabled={form.formState.isSubmitting}
+            type="submit"
+            className="ml-auto mr-0"
+            size="icon"
+          >
+            <Send />
+          </Button>
+        </div>
       </form>
     </Form>
   );
@@ -244,7 +261,7 @@ function PostDialog({
     results: comments,
     status: commentsStatus,
   } = usePaginatedQuery(
-    api.comments.getPublicPostComments,
+    api.postComments.getPublicPostComments,
     { postId: post._id },
     { initialNumItems: 6 },
   );
@@ -276,7 +293,8 @@ function PostDialog({
                   <CommentCard
                     key={comment._id}
                     comment={comment}
-                    postId={post._id}
+                    post={post}
+                    currentUser={currentUser}
                   />
                 ))}
                 <Button
@@ -305,21 +323,31 @@ function PostDialog({
 
 function CommentCard({
   comment,
-  postId,
-}: {
-  comment: Doc<"comments"> & {
+  post,
+  currentUser,
+  className,
+}: PostCardProps & {
+  comment: Doc<"postComments"> & {
     user: Doc<"users"> | null;
     isMyComment: boolean;
     isMyPost: boolean;
     isLiked: boolean;
   };
-} & {
-  postId: Id<"posts">;
+  className?: string;
 }) {
-  const removeComment = useMutation(api.comments.remove);
+  const { results: childCommentsResults, loadMore: loadMoreChildComments } =
+    usePaginatedQuery(
+      api.postComments.getChildComments,
+      { postId: post._id, commentId: comment._id },
+      { initialNumItems: 3 },
+    );
+  const removeComment = useMutation(api.postComments.remove);
   const toggleLike = useMutation(api.likes.toggleLikeComment);
   const handleRemoveComment = async () => {
-    const res = await removeComment({ commentId: comment._id, postId });
+    const res = await removeComment({
+      commentId: comment._id,
+      postId: post._id,
+    });
     if (res !== true) return toast.error(res);
   };
   const handleToggleLike = async () => {
@@ -329,7 +357,10 @@ function CommentCard({
   return (
     <div
       key={comment._id}
-      className="inline-flex gap-2 items-start p-2 sm:p-4 bg-muted rounded-md"
+      className={cn(
+        "inline-flex gap-2 items-start p-2 sm:p-4 bg-muted rounded-md",
+        className,
+      )}
     >
       <Avatar user={comment.user} size={32} />
       <div className="text-sm flex-1 space-y-1">
@@ -337,33 +368,61 @@ function CommentCard({
           {comment.user?.username}
         </p>
         <p>{comment.content}</p>
-        <div className="text-xs flex flex-wrap-reverse gap-x-4 gap-y-2 justify-between text-muted-foreground mt-3">
-          <div className="flex gap-4 truncate [&>button]:hover:underline">
-            <button onClick={() => void handleToggleLike()}>
-              {comment.isLiked ? "Unlike" : "Like"}{" "}
-              {comment.likesCount ? `(${comment.likesCount})` : null}
-            </button>
-            <button>Reply</button>
-            <button hidden={!comment.isMyComment} className="text-yellow-600">
-              Edit
-            </button>
-            <ConfirmDialog
-              title="Remove Comment"
-              description="Are you sure you want to remove this comment? This action cannot be undone."
-              confirm={() => void handleRemoveComment()}
-            >
-              <button
-                hidden={!comment.isMyComment && !comment.isMyPost}
-                className="text-destructive"
-              >
-                Remove
+        <Collapsible>
+          <div className="text-xs flex flex-wrap-reverse gap-x-4 gap-y-2 justify-between text-muted-foreground mt-3">
+            <div className="flex gap-4 truncate [&>button]:hover:underline">
+              <button onClick={() => void handleToggleLike()}>
+                {comment.isLiked ? "Unlike" : "Like"}{" "}
+                {comment.likesCount ? `(${comment.likesCount})` : null}
               </button>
-            </ConfirmDialog>
+              <CollapsibleTrigger asChild>
+                <button>Reply</button>
+              </CollapsibleTrigger>
+              <button hidden={!comment.isMyComment} className="text-yellow-600">
+                Edit
+              </button>
+              <ConfirmDialog
+                title="Remove Comment"
+                description="Are you sure you want to remove this comment? This action cannot be undone."
+                confirm={() => void handleRemoveComment()}
+              >
+                <button
+                  hidden={!comment.isMyComment && !comment.isMyPost}
+                  className="text-destructive"
+                >
+                  Remove
+                </button>
+              </ConfirmDialog>
+            </div>
+            <p className="text-xs">
+              {new Date(comment._creationTime).toLocaleDateString()}
+            </p>
           </div>
-          <p className="text-xs">
-            {new Date(comment._creationTime).toLocaleDateString()}
-          </p>
-        </div>
+          <CollapsibleContent className="mt-2 sm:mt-4 flex gap-2 w-full">
+            <CommentForm
+              currentUser={currentUser}
+              post={post}
+              comment={comment}
+            />
+          </CollapsibleContent>
+        </Collapsible>
+        {childCommentsResults.length ? (
+          <div className="flex flex-col gap-2 mt-4">
+            {childCommentsResults.map((childComment) => (
+              <div key={childComment._id} className="relative">
+                <div className="absolute -left-8 top-0">
+                  <CornerDownRight className="text-muted-foreground/25" />
+                </div>
+                <CommentCard
+                  className="p-0 sm:p-0 w-full"
+                  comment={childComment}
+                  post={post}
+                  currentUser={currentUser}
+                />
+              </div>
+            ))}
+          </div>
+        ) : null}
       </div>
     </div>
   );

@@ -167,7 +167,7 @@ export const remove = mutation({
     }
 
     const comments = await ctx.db
-      .query("comments")
+      .query("postComments")
       .withIndex("byPost", (q) => q.eq("postId", postId))
       .collect();
 

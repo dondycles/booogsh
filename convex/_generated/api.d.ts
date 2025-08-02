@@ -13,9 +13,9 @@ import type {
   FilterApi,
   FunctionReference,
 } from "convex/server";
-import type * as comments from "../comments.js";
 import type * as likes from "../likes.js";
 import type * as myFunctions from "../myFunctions.js";
+import type * as postComments from "../postComments.js";
 import type * as posts from "../posts.js";
 import type * as users from "../users.js";
 
@@ -28,9 +28,9 @@ import type * as users from "../users.js";
  * ```
  */
 declare const fullApi: ApiFromModules<{
-  comments: typeof comments;
   likes: typeof likes;
   myFunctions: typeof myFunctions;
+  postComments: typeof postComments;
   posts: typeof posts;
   users: typeof users;
 }>;

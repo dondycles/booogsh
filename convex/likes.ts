@@ -56,7 +56,7 @@ export const toggleLikePost = mutation({
 });
 
 export const toggleLikeComment = mutation({
-  args: { commentId: v.id("comments") },
+  args: { commentId: v.id("postComments") },
   handler: async (ctx, { commentId }) => {
     const user = await ctx.auth.getUserIdentity();
     if (!user) {
@@ -80,7 +80,7 @@ export const toggleLikeComment = mutation({
     }
 
     const like = await ctx.db
-      .query("commentLikes")
+      .query("postCommentLikes")
       .withIndex("byCommentAndUser", (q) =>
         q.eq("commentId", commentId).eq("userId", userDbData._id),
       )
@@ -95,7 +95,7 @@ export const toggleLikeComment = mutation({
       await ctx.db.patch(comment._id, {
         likesCount: comment.likesCount ? comment.likesCount + 1 : 1,
       });
-      await ctx.db.insert("commentLikes", {
+      await ctx.db.insert("postCommentLikes", {
         commentId,
         userId: userDbData._id,
       });
