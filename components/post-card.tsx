@@ -37,6 +37,10 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import Avatar from "./avatar";
 import { ScrollArea } from "./ui/scroll-area";
 import { cn } from "@/lib/utils";
+export const commentSchema = z.object({
+  postId: z.custom<Id<"posts">>(),
+  content: z.string().min(1).max(500),
+});
 
 interface PostCardProps {
   post: Doc<"posts"> & {
@@ -139,7 +143,7 @@ function PostOptions({ post, currentUser }: PostCardProps) {
 }
 
 function LikeButton({ post }: PostCardProps) {
-  const toggleLikePost = useMutation(api.posts.toggleLike);
+  const toggleLikePost = useMutation(api.likes.toggleLikePost);
   const handleToggleLikePost = async () => {
     const res = await toggleLikePost({ postId: post._id });
     if (res !== true) return toast.error(res);
@@ -160,11 +164,6 @@ function LikeButton({ post }: PostCardProps) {
   );
 }
 
-export const commentSchema = z.object({
-  postId: z.custom<Id<"posts">>(),
-  content: z.string().min(1).max(500),
-});
-
 function CommentForm({ post }: PostCardProps) {
   const form = useForm<z.infer<typeof commentSchema>>({
     resolver: zodResolver(commentSchema),
@@ -174,7 +173,7 @@ function CommentForm({ post }: PostCardProps) {
     },
   });
 
-  const addComment = useMutation(api.posts.addComment);
+  const addComment = useMutation(api.comments.add);
   const handleAddComment = async (data: z.infer<typeof commentSchema>) => {
     const res = await addComment(data);
     if (res !== true) return toast.error(res);
@@ -221,7 +220,7 @@ function PostDialog({
     results: comments,
     status: commentsStatus,
   } = usePaginatedQuery(
-    api.posts.getPublicPostComments,
+    api.comments.getPublicPostComments,
     { postId: post._id },
     { initialNumItems: 6 },
   );
@@ -234,7 +233,7 @@ function PostDialog({
         className=" max-w-xl sm:max-w-xl p-2 sm:p-4 bg-transparent overflow-hidden border-0 shadow-none"
       >
         <ScrollArea>
-          <div className="flex flex-col gap-2 sm:gap-4 h-[75dvh] relative backdrop-blur  bg-background/50 rounded-md border">
+          <div className="flex flex-col gap-2 sm:gap-4 h-[60dvh] relative backdrop-blur  bg-background/50 rounded-md border">
             <DialogHeader className="sr-only">
               <DialogTitle>Comments</DialogTitle>
             </DialogHeader>
@@ -287,13 +286,19 @@ function CommentCard({
   comment: Doc<"comments"> & {
     user: Doc<"users"> | null;
     isMyComment: boolean;
+    isLiked: boolean;
   };
 } & {
   postId: Id<"posts">;
 }) {
-  const removeComment = useMutation(api.posts.removeComment);
+  const removeComment = useMutation(api.comments.remove);
+  const toggleLike = useMutation(api.likes.toggleLikeComment);
   const handleRemoveComment = async () => {
     const res = await removeComment({ commentId: comment._id, postId });
+    if (res !== true) return toast.error(res);
+  };
+  const handleToggleLike = async () => {
+    const res = await toggleLike({ commentId: comment._id });
     if (res !== true) return toast.error(res);
   };
   return (
@@ -304,23 +309,23 @@ function CommentCard({
       <Avatar user={comment.user} size={32} />
       <div className="text-sm flex-1 space-y-1">
         <p className="text-muted-foreground whitespace-pre-wrap">
-          {comment.userId}
+          {comment.user?.username}
         </p>
         <p>{comment.content}</p>
         <div className="text-xs flex flex-wrap-reverse gap-x-4 gap-y-2 justify-between text-muted-foreground mt-3">
-          <div className="flex gap-4 truncate">
-            <button className="truncate">Like</button>
-            <button className="truncate">Reply</button>
-            <button
-              hidden={!comment.isMyComment}
-              className="truncate text-yellow-600"
-            >
+          <div className="flex gap-4 truncate [&>button]:hover:underline">
+            <button onClick={() => void handleToggleLike()}>
+              {comment.isLiked ? "Unlike" : "Like"}{" "}
+              {comment.likesCount ? `(${comment.likesCount})` : null}
+            </button>
+            <button>Reply</button>
+            <button hidden={!comment.isMyComment} className="text-yellow-600">
               Edit
             </button>
             <button
               hidden={!comment.isMyComment}
               onClick={() => void handleRemoveComment()}
-              className="truncate text-destructive"
+              className="text-destructive"
             >
               Remove
             </button>

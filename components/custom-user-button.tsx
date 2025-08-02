@@ -66,7 +66,7 @@ export default function CustomUserButton({
         asChild
       >
         <Link href={`/u/${user?.username}`} className="flex items-center gap-2">
-          {showName ? <p>{user?._id}</p> : null}
+          {showName ? <p>{user?.username}</p> : null}
           {user?.pfp ? (
             <Image
               src={user?.pfp}
