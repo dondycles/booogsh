@@ -334,12 +334,11 @@ function CommentCard({
   };
   className?: string;
 }) {
-  const { results: childCommentsResults, loadMore: loadMoreChildComments } =
-    usePaginatedQuery(
-      api.postComments.getChildComments,
-      { postId: post._id, commentId: comment._id },
-      { initialNumItems: 3 },
-    );
+  const { results: childCommentsResults } = usePaginatedQuery(
+    api.postComments.getChildComments,
+    { postId: post._id, commentId: comment._id },
+    { initialNumItems: 3 },
+  );
   const removeComment = useMutation(api.postComments.remove);
   const toggleLike = useMutation(api.likes.toggleLikeComment);
   const handleRemoveComment = async () => {
