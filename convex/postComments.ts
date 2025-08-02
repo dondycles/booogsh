@@ -230,9 +230,6 @@ export const remove = mutation({
     if (childrenComments.length > 0) {
       await Promise.all(
         childrenComments.map(async (childComment) => {
-          await ctx.db.patch(post._id, {
-            commentsCount: post.commentsCount ? post.commentsCount - 1 : 0,
-          });
           await ctx.db.delete(childComment._id);
         }),
       );

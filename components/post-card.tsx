@@ -10,7 +10,6 @@ import {
   Pencil,
   Send,
   Share2,
-  Text,
   Trash2,
   Users2,
 } from "lucide-react";
