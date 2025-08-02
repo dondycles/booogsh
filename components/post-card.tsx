@@ -28,7 +28,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import z from "zod";
+import z, { set } from "zod";
 import { useForm } from "react-hook-form";
 import { Form, FormControl, FormField, FormItem, FormMessage } from "./ui/form";
 import { Textarea } from "./ui/textarea";
@@ -38,6 +38,7 @@ import Avatar from "./avatar";
 import { ScrollArea } from "./ui/scroll-area";
 import { cn } from "@/lib/utils";
 import ConfirmDialog from "./comfirm-dialog";
+import { useState } from "react";
 export const commentSchema = z.object({
   postId: z.custom<Id<"posts">>(),
   content: z.string().min(1).max(500),
@@ -119,24 +120,45 @@ export default function PostCard({
 }
 
 function PostOptions({ post, currentUser }: PostCardProps) {
-  const handleRemovePost = useMutation(api.posts.remove);
+  const [open, setOpen] = useState(false);
+  const removePost = useMutation(api.posts.remove);
+  const handleRemovePost = async () => {
+    const res = await removePost({ postId: post._id });
+    if (res !== true) return toast.error(res);
+    setOpen(false);
+  };
   if (!currentUser) return null;
   return (
-    <DropdownMenu>
+    <DropdownMenu open={open} onOpenChange={setOpen}>
       <DropdownMenuTrigger>
         <Ellipsis className="size-4" />
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
-        <DropdownMenuItem
-          onClick={() => handleRemovePost({ postId: post._id })}
-          hidden={currentUser?._id !== post.user?._id}
+        <ConfirmDialog
+          confirm={() => {
+            void handleRemovePost();
+          }}
+          title="Remove Post"
+          description="Are you sure you want to remove this post? This action cannot be undone."
         >
-          <Trash2 /> Delete
-        </DropdownMenuItem>
-        <DropdownMenuItem hidden={currentUser?._id !== post.user?._id}>
+          <DropdownMenuItem
+            hidden={currentUser?._id !== post.user?._id}
+            disabled={currentUser?._id !== post.user?._id}
+            onSelect={(e) => e.preventDefault()}
+          >
+            <Trash2 /> Delete
+          </DropdownMenuItem>
+        </ConfirmDialog>
+        <DropdownMenuItem
+          hidden={currentUser?._id !== post.user?._id}
+          disabled={currentUser?._id !== post.user?._id}
+        >
           <Pencil /> Edit
         </DropdownMenuItem>
-        <DropdownMenuItem hidden={currentUser?._id === post.user?._id}>
+        <DropdownMenuItem
+          hidden={currentUser?._id === post.user?._id}
+          disabled={currentUser?._id === post.user?._id}
+        >
           <EyeOff /> Hide
         </DropdownMenuItem>
       </DropdownMenuContent>

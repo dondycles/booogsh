@@ -6,6 +6,7 @@ export const getPublicPostComments = query({
   args: { postId: v.id("posts"), paginationOpts: paginationOptsValidator },
   handler: async (ctx, { postId, paginationOpts }) => {
     const post = await ctx.db.get(postId);
+
     if (!post) {
       throw new Error("Post not found.");
     }

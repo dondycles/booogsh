@@ -134,7 +134,7 @@ export const remove = mutation({
   handler: async (ctx, { postId }) => {
     const user = await ctx.auth.getUserIdentity();
     if (!user) {
-      throw new Error("You must be signed in to like a post.");
+      return "You must be signed in to like a post.";
     }
 
     const userDbData = await ctx.db
@@ -145,19 +145,18 @@ export const remove = mutation({
       .unique();
 
     if (!userDbData) {
-      throw new Error("No user found with the provided token identifier.");
+      return "No user found with the provided token identifier.";
     }
 
     const post = await ctx.db.get(postId);
     if (!post) {
-      throw new Error("Post not found.");
+      return "Post not found.";
     }
 
     if (post.userId !== userDbData._id) {
-      throw new Error("You are not authorized to delete this post.");
+      return "You are not authorized to delete this post.";
     }
 
-    // Remove all likes associated with the post
     const likes = await ctx.db
       .query("postLikes")
       .withIndex("byPost", (q) => q.eq("postId", postId))
@@ -167,7 +166,6 @@ export const remove = mutation({
       await ctx.db.delete(like._id);
     }
 
-    // Remove all comments associated with the post
     const comments = await ctx.db
       .query("comments")
       .withIndex("byPost", (q) => q.eq("postId", postId))
@@ -176,7 +174,9 @@ export const remove = mutation({
     for (const comment of comments) {
       await ctx.db.delete(comment._id);
     }
-    // Finally, delete the post itself
-    return await ctx.db.delete(postId);
+
+    await ctx.db.delete(postId);
+
+    return true;
   },
 });
