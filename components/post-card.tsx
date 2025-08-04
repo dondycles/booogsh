@@ -136,9 +136,11 @@ function PostOptions({ post, currentUser }: PostCardProps) {
       await removePost({ postId: post._id });
       setOpen(false);
     } catch (error) {
-      error instanceof ConvexError
-        ? toast.error(error.message)
-        : toast.error("Post could not be removed. Please try again.");
+      if (error instanceof ConvexError) {
+        toast.error(error.message);
+      } else {
+        toast.error("Post could not be removed. Please try again.");
+      }
     }
   };
   if (!currentUser) return null;
@@ -193,9 +195,11 @@ function LikeButton({ post }: PostCardProps) {
     try {
       await toggleLikePost({ postId: post._id });
     } catch (error) {
-      error instanceof ConvexError
-        ? toast.error(error.message)
-        : toast.error("Post could not be liked. Please try again.");
+      if (error instanceof ConvexError) {
+        toast.error(error.message);
+      } else {
+        toast.error("Post could not be liked. Please try again.");
+      }
     }
   };
   return (
@@ -239,9 +243,11 @@ function CommentForm({
       form.reset();
       if (close) close();
     } catch (error) {
-      error instanceof ConvexError
-        ? toast.error(error.message)
-        : toast.error("Comment could not be added. Please try again.");
+      if (error instanceof ConvexError) {
+        toast.error(error.message);
+      } else {
+        toast.error("Comment could not be added. Please try again.");
+      }
     }
   };
   return (
@@ -380,9 +386,11 @@ function CommentCard({
         parentCommentId,
       });
     } catch (error) {
-      error instanceof ConvexError
-        ? toast.error(error.message)
-        : toast.error("Comment could not be removed. Please try again.");
+      if (error instanceof ConvexError) {
+        toast.error(error.message);
+      } else {
+        toast.error("Comment could not be removed. Please try again.");
+      }
     }
   };
   const handleToggleLike = async () => {

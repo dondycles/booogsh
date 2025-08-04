@@ -59,9 +59,11 @@ export default function EditPostForm({
       }
     } catch (error) {
       toast.dismiss(data.message);
-      error instanceof ConvexError
-        ? toast.error(error.message)
-        : toast.error("Post could not be edited. Please try again.");
+      if (error instanceof ConvexError) {
+        toast.error(error.message);
+      } else {
+        toast.error("Post could not be edited. Please try again.");
+      }
     }
   };
   return (
