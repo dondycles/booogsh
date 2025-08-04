@@ -397,9 +397,11 @@ function CommentCard({
     try {
       await toggleLike({ commentId: comment._id });
     } catch (error) {
-      error instanceof ConvexError
-        ? toast.error(error.message)
-        : toast.error("Comment could not be liked. Please try again.");
+      if (error instanceof ConvexError) {
+        toast.error(error.message);
+      } else {
+        toast.error("Comment could not be liked. Please try again.");
+      }
     }
   };
   return (
