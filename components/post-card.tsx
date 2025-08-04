@@ -53,10 +53,17 @@ import {
 } from "@/components/ui/collapsible";
 import EditPostForm from "./forms/edit-post-form";
 import { ConvexError } from "convex/values";
+import AddPostForm from "./forms/add-post-form";
 interface PostCardProps {
   post: Doc<"posts"> & {
     user: Doc<"users"> | null;
     isLiked: boolean;
+    sharedPost?:
+      | (Doc<"posts"> & {
+          user: Doc<"users"> | null;
+          isLiked: boolean;
+        })
+      | null;
   };
   currentUser: Doc<"users"> | null;
 }
@@ -66,7 +73,10 @@ export default function PostCard({
   currentUser,
   isDisabledComments = false,
   className,
-}: PostCardProps & { isDisabledComments?: boolean; className?: string }) {
+}: PostCardProps & {
+  isDisabledComments?: boolean;
+  className?: string;
+}) {
   return (
     <div
       key={post._id}
@@ -100,6 +110,18 @@ export default function PostCard({
         {post.message}
       </h1>
 
+      {post.sharedPost ? (
+        <div className="px-2 sm:px-4">
+          <div className="border rounded-md">
+            <PostCard
+              post={post.sharedPost}
+              currentUser={currentUser}
+              isDisabledComments={isDisabledComments}
+            />
+          </div>
+        </div>
+      ) : null}
+
       <div className="flex [&>*]:flex-1 gap-px mt-4 h-10 bg-accent/30 rounded-b-md">
         <LikeButton currentUser={currentUser} post={post} />
         {isDisabledComments ? null : (
@@ -115,14 +137,7 @@ export default function PostCard({
             </Button>
           </PostDialog>
         )}
-        <Button
-          variant="ghost"
-          className=" text-muted-foreground rounded-none  rounded-br-md truncate  h-full"
-        >
-          <span>
-            <Share2 />
-          </span>
-        </Button>
+        <ShareButton post={post} currentUser={currentUser} />
       </div>
     </div>
   );
@@ -186,6 +201,44 @@ function PostOptions({ post, currentUser }: PostCardProps) {
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
+  );
+}
+
+function ShareButton({ post, currentUser }: PostCardProps) {
+  const [open, setOpen] = useState(false);
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button
+          variant="ghost"
+          className=" text-muted-foreground rounded-none  rounded-br-md truncate  h-full"
+        >
+          <span>
+            <Share2 />
+          </span>
+        </Button>
+      </DialogTrigger>
+      <DialogContent
+        showCloseButton={false}
+        className=" max-w-xl sm:max-w-xl p-2 sm:p-4 bg-transparent overflow-hidden border-0 shadow-none"
+      >
+        <div className="flex flex-col relative backdrop-blur bg-border rounded-md border overflow-auto">
+          <DialogHeader className="px-2 sm:px-4 py-2 sm:py-4">
+            <DialogTitle>Share this post?</DialogTitle>
+          </DialogHeader>
+          <AddPostForm
+            sharedPostId={post._id}
+            className="rounded-none"
+            close={() => setOpen(false)}
+          />
+          <PostCard
+            post={post}
+            currentUser={currentUser}
+            className="rounded-none mt-2 sm:mt-4"
+          />
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }
 
@@ -304,10 +357,10 @@ function PostDialog({
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent
         showCloseButton={false}
-        className=" max-w-xl sm:max-w-xl p-2 sm:p-4 bg-transparent overflow-hidden border-0 shadow-none"
+        className=" max-w-[calc(100%-1rem)] sm:max-w-xl  p-0 sm:p-0 bg-transparent overflow-hidden border shadow-none"
       >
-        <ScrollArea>
-          <div className="flex flex-col gap-2 sm:gap-4 h-[60dvh] relative backdrop-blur  bg-background/50 rounded-md border">
+        <ScrollArea className="max-h-[60dvh]">
+          <div className="flex flex-col gap-2 sm:gap-4  relative backdrop-blur bg-border">
             <DialogHeader className="sr-only">
               <DialogTitle>Comments</DialogTitle>
             </DialogHeader>
@@ -343,7 +396,6 @@ function PostDialog({
                 </Button>
               </div>
             ) : null}
-
             <div className="sticky bottom-0 left-0 right-0 bg-muted rounded-b-md mb-0 mt-auto border-t p-2 sm:p-4">
               <CommentForm currentUser={currentUser} post={post} />
             </div>
@@ -427,13 +479,18 @@ function CommentCard({
               </button>
               <CollapsibleTrigger asChild>
                 <button>
-                  Reply{" "}
-                  {comment.commentsCount ? `(${comment.commentsCount})` : null}
+                  {collapseForm
+                    ? "Cancel Reply"
+                    : `Reply ${
+                        comment.commentsCount
+                          ? `(${comment.commentsCount})`
+                          : ""
+                      }`}
                 </button>
               </CollapsibleTrigger>
-              <button hidden={!comment.isMyComment} className="text-yellow-600">
+              {/* <button hidden={!comment.isMyComment} className="text-yellow-600">
                 Edit
-              </button>
+              </button> */}
               <ConfirmDialog
                 title="Remove Comment"
                 description="Are you sure you want to remove this comment? This action cannot be undone."
@@ -501,11 +558,11 @@ function EditFormDialog({
         showCloseButton={false}
         className=" max-w-xl sm:max-w-xl p-2 sm:p-4 bg-transparent overflow-hidden border-0 shadow-none"
       >
-        <ScrollArea>
-          <div className="flex flex-col gap-2 sm:gap-4 h-[60dvh] relative backdrop-blur  bg-background/50 rounded-md border">
-            <DialogHeader className="px-2 sm:px-4 pt-2 sm:pt-4">
-              <DialogTitle>Edit post</DialogTitle>
-            </DialogHeader>
+        <div className="flex flex-col relative backdrop-blur bg-border rounded-md border overflow-auto">
+          <DialogHeader className="px-2 sm:px-4 py-2 sm:py-4">
+            <DialogTitle>Edit post</DialogTitle>
+          </DialogHeader>
+          <ScrollArea className="max-h-[50dvh]">
             <EditPostForm
               post={post}
               close={() => {
@@ -513,8 +570,8 @@ function EditFormDialog({
                 confirm();
               }}
             />
-          </div>
-        </ScrollArea>
+          </ScrollArea>
+        </div>
       </DialogContent>
     </Dialog>
   );

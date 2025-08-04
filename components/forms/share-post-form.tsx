@@ -21,55 +21,56 @@ import {
 import { Button } from "../ui/button";
 import { Globe2, Lock, Send, Users2 } from "lucide-react";
 import { toast } from "sonner";
-import { cn } from "@/lib/utils";
-import { Id } from "@/convex/_generated/dataModel";
-export const postSchema = z.object({
+import { Doc } from "@/convex/_generated/dataModel";
+import { ConvexError } from "convex/values";
+export const sharePostSchema = z.object({
   message: z.string().trim().min(1, "Message is required"),
   privacy: z.enum(["public", "private", "friends"]),
-  sharedPostId: z.custom<Id<"posts">>().optional(),
 });
 
-export default function AddPostForm({
-  className,
+export default function SharePostForm({
+  post,
   close,
-  sharedPostId,
 }: {
-  className?: string;
+  post: Doc<"posts">;
   close?: () => void;
-  sharedPostId?: Id<"posts">;
 }) {
-  const form = useForm<z.infer<typeof postSchema>>({
-    resolver: zodResolver(postSchema),
+  const form = useForm<z.infer<typeof sharePostSchema>>({
+    resolver: zodResolver(sharePostSchema),
     defaultValues: {
-      message: "",
-      privacy: "public",
-      sharedPostId,
+      message: post.message || "",
+      privacy: post.privacy || "public",
     },
   });
 
-  const handleAddPost = useMutation(api.posts.add);
-
+  const editPost = useMutation(api.posts.update);
+  const handleEditPost = async (data: z.infer<typeof sharePostSchema>) => {
+    toast.loading("Editing post...", { id: data.message });
+    try {
+      await editPost({
+        ...data,
+        postId: post._id,
+      });
+      toast.dismiss(data.message);
+      toast.success("Post edited successfully!");
+      form.reset();
+      if (close) {
+        close();
+      }
+    } catch (error) {
+      toast.dismiss(data.message);
+      if (error instanceof ConvexError) {
+        toast.error(error.message);
+      } else {
+        toast.error("Post could not be edited. Please try again.");
+      }
+    }
+  };
   return (
     <Form {...form}>
       <form
-        onSubmit={form.handleSubmit(async (data) => {
-          toast.loading("Adding post...", { id: data.message });
-          const res = await handleAddPost(data);
-          toast.dismiss(data.message);
-          if (res) {
-            toast.success("Post added successfully!");
-            form.reset();
-            if (close) {
-              close();
-            }
-            return;
-          }
-          toast.warning("Post could not be added. Please try again.");
-        })}
-        className={cn(
-          "flex flex-col gap-2 sm:gap-4 bg-muted rounded-md p-2 sm:p-4",
-          className,
-        )}
+        onSubmit={form.handleSubmit(handleEditPost)}
+        className="flex flex-col gap-2 sm:gap-4 bg-muted rounded-md p-2 sm:p-4"
       >
         <FormField
           name="message"
@@ -118,7 +119,7 @@ export default function AddPostForm({
           />
           <Button disabled={form.formState.isSubmitting} type="submit">
             <Send />
-            Post
+            Edit Post
           </Button>
         </div>
       </form>

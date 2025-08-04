@@ -55,7 +55,6 @@ export const getPublicPosts = query({
     const mappedPage = await Promise.all(
       results.page.map(async (post) => {
         const user = await ctx.db.get(post.userId);
-
         const isLiked = userDbData
           ? await ctx.db
               .query("postLikes")
@@ -65,10 +64,36 @@ export const getPublicPosts = query({
               .unique()
           : null;
 
+        if (post.sharedPostId) {
+          const sharedPost = await ctx.db.get(post.sharedPostId);
+          if (!sharedPost) throw new ConvexError("Shared post not found.");
+          const user = await ctx.db.get(sharedPost?.userId);
+          const sharedPostIsLiked = userDbData
+            ? await ctx.db
+                .query("postLikes")
+                .withIndex("byPostAndUser", (q) =>
+                  q.eq("postId", sharedPost._id).eq("userId", userDbData._id),
+                )
+                .unique()
+            : null;
+
+          return {
+            ...post,
+            user,
+            isLiked: !!isLiked,
+            sharedPost: {
+              ...sharedPost,
+              user,
+              isLiked: !!sharedPostIsLiked,
+            },
+          };
+        }
+
         return {
           ...post,
           user,
           isLiked: !!isLiked,
+          sharedPost: null,
         };
       }),
     );
@@ -102,6 +127,7 @@ export const add = mutation({
       v.literal("private"),
       v.literal("friends"),
     ),
+    sharedPostId: v.optional(v.id("posts")),
   },
   handler: async (ctx, args) => {
     const user = await ctx.auth.getUserIdentity();
@@ -125,6 +151,7 @@ export const add = mutation({
       message: args.message,
       privacy: args.privacy,
       userId: userDbData?._id,
+      sharedPostId: args.sharedPostId,
     });
   },
 });

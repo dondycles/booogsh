@@ -23,7 +23,11 @@ export default defineSchema({
     lastUpdate: v.optional(v.string()),
     likesCount: v.optional(v.number()),
     commentsCount: v.optional(v.number()),
-  }).index("byUser", ["userId"]),
+    sharedPostId: v.optional(v.id("posts")),
+    shareCount: v.optional(v.number()),
+  })
+    .index("byUser", ["userId"])
+    .index("bySharedPost", ["sharedPostId"]),
   postLikes: defineTable({
     postId: v.id("posts"),
     userId: v.id("users"),

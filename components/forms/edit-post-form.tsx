@@ -70,12 +70,12 @@ export default function EditPostForm({
     <Form {...form}>
       <form
         onSubmit={form.handleSubmit(handleEditPost)}
-        className="flex flex-col gap-2 sm:gap-4 bg-muted rounded-md p-2 sm:p-4"
+        className="flex flex-col gap-2 sm:gap-4 relative"
       >
         <FormField
           name="message"
           render={({ field }) => (
-            <FormItem>
+            <FormItem className="px-2 sm:px-4">
               <FormControl>
                 <Textarea {...field} placeholder="What's on your mind?" />
               </FormControl>
@@ -83,7 +83,7 @@ export default function EditPostForm({
             </FormItem>
           )}
         />
-        <div className="flex gap-2 sm:gap-4 flex-wrap justify-between">
+        <div className="flex gap-2 sm:gap-4 flex-wrap justify-between sticky bottom-0 border-t bg-muted left-0 right-0 w-full p-2 sm:p-4 ">
           <FormField
             control={form.control}
             name="privacy"
