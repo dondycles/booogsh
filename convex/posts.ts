@@ -1,4 +1,4 @@
-import { v } from "convex/values";
+import { ConvexError, v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { paginationOptsValidator } from "convex/server";
 
@@ -84,7 +84,7 @@ export const getMyPosts = query({
   handler: async (ctx) => {
     const user = await ctx.auth.getUserIdentity();
     if (!user) {
-      throw new Error("You must be signed in to get your posts.");
+      throw new ConvexError("You must be signed in to get your posts.");
     }
 
     return await ctx.db
@@ -134,7 +134,7 @@ export const remove = mutation({
   handler: async (ctx, { postId }) => {
     const user = await ctx.auth.getUserIdentity();
     if (!user) {
-      return "You must be signed in to like a post.";
+      throw new ConvexError("You must be signed in to like a post.");
     }
 
     const userDbData = await ctx.db
@@ -145,16 +145,18 @@ export const remove = mutation({
       .unique();
 
     if (!userDbData) {
-      return "No user found with the provided token identifier.";
+      throw new ConvexError(
+        "No user found with the provided token identifier.",
+      );
     }
 
     const post = await ctx.db.get(postId);
     if (!post) {
-      return "Post not found.";
+      throw new ConvexError("Post not found.");
     }
 
     if (post.userId !== userDbData._id) {
-      return "You are not authorized to delete this post.";
+      throw new ConvexError("You are not authorized to delete this post.");
     }
 
     const likes = await ctx.db
@@ -172,11 +174,62 @@ export const remove = mutation({
       .collect();
 
     for (const comment of comments) {
-      await ctx.db.delete(comment._id);
+      const commentLikes = await ctx.db
+        .query("postCommentLikes")
+        .withIndex("byComment", (q) => q.eq("commentId", comment._id))
+        .collect();
+      if (commentLikes.length > 0) {
+        for (const commentLike of commentLikes) {
+          await ctx.db.delete(commentLike._id);
+        }
+        await ctx.db.delete(comment._id);
+      }
+    }
+    await ctx.db.delete(postId);
+  },
+});
+
+export const update = mutation({
+  args: {
+    postId: v.id("posts"),
+    message: v.string(),
+    privacy: v.union(
+      v.literal("public"),
+      v.literal("private"),
+      v.literal("friends"),
+    ),
+  },
+  handler: async (ctx, args) => {
+    const user = await ctx.auth.getUserIdentity();
+    if (!user) {
+      throw new ConvexError("You must be signed in to update a post.");
     }
 
-    await ctx.db.delete(postId);
+    const userDbData = await ctx.db
+      .query("users")
+      .withIndex("by_token", (q) =>
+        q.eq("tokenIdentifier", user.tokenIdentifier),
+      )
+      .unique();
 
-    return true;
+    if (!userDbData) {
+      throw new ConvexError(
+        "No user found with the provided token identifier.",
+      );
+    }
+
+    const post = await ctx.db.get(args.postId);
+    if (!post) {
+      throw new ConvexError("Post not found.");
+    }
+
+    if (post.userId !== userDbData._id) {
+      throw new ConvexError("You are not authorized to update this post.");
+    }
+
+    await ctx.db.patch(post._id, {
+      message: args.message,
+      privacy: args.privacy,
+    });
   },
 });

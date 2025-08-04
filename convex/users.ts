@@ -1,4 +1,4 @@
-import { v } from "convex/values";
+import { ConvexError, v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 
 export const checkAndGetUser = mutation({
@@ -13,7 +13,7 @@ export const checkAndGetUser = mutation({
   handler: async (ctx, { info: { email, name, username, pfp } }) => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) {
-      throw new Error("Called storeUser without authentication present");
+      throw new ConvexError("Called storeUser without authentication present");
     }
 
     const userDbData = await ctx.db
@@ -58,7 +58,7 @@ export const authCheck = query({
   handler: async (ctx) => {
     const user = await ctx.auth.getUserIdentity();
     if (!user) {
-      throw new Error("You must be signed in to like a post.");
+      throw new ConvexError("You must be signed in to like a post.");
     }
 
     const userDbData = await ctx.db
@@ -69,7 +69,9 @@ export const authCheck = query({
       .unique();
 
     if (!userDbData) {
-      throw new Error("No user found with the provided token identifier.");
+      throw new ConvexError(
+        "No user found with the provided token identifier.",
+      );
     }
     return userDbData;
   },

@@ -10,6 +10,7 @@ import {
   Pencil,
   Send,
   Share2,
+  Slash,
   Trash2,
   Users2,
 } from "lucide-react";
@@ -50,6 +51,8 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
+import EditPostForm from "./forms/edit-post-form";
+import { ConvexError } from "convex/values";
 interface PostCardProps {
   post: Doc<"posts"> & {
     user: Doc<"users"> | null;
@@ -129,9 +132,14 @@ function PostOptions({ post, currentUser }: PostCardProps) {
   const [open, setOpen] = useState(false);
   const removePost = useMutation(api.posts.remove);
   const handleRemovePost = async () => {
-    const res = await removePost({ postId: post._id });
-    if (res !== true) return toast.error(res);
-    setOpen(false);
+    try {
+      await removePost({ postId: post._id });
+      setOpen(false);
+    } catch (error) {
+      error instanceof ConvexError
+        ? toast.error(error.message)
+        : toast.error("Post could not be removed. Please try again.");
+    }
   };
   if (!currentUser) return null;
   return (
@@ -155,12 +163,19 @@ function PostOptions({ post, currentUser }: PostCardProps) {
             <Trash2 /> Delete
           </DropdownMenuItem>
         </ConfirmDialog>
-        <DropdownMenuItem
-          hidden={currentUser?._id !== post.user?._id}
-          disabled={currentUser?._id !== post.user?._id}
+        <EditFormDialog
+          currentUser={currentUser}
+          post={post}
+          confirm={() => setOpen(false)}
         >
-          <Pencil /> Edit
-        </DropdownMenuItem>
+          <DropdownMenuItem
+            hidden={currentUser?._id !== post.user?._id}
+            disabled={currentUser?._id !== post.user?._id}
+            onSelect={(e) => e.preventDefault()}
+          >
+            <Pencil /> Edit
+          </DropdownMenuItem>
+        </EditFormDialog>
         <DropdownMenuItem
           hidden={currentUser?._id === post.user?._id}
           disabled={currentUser?._id === post.user?._id}
@@ -175,8 +190,13 @@ function PostOptions({ post, currentUser }: PostCardProps) {
 function LikeButton({ post }: PostCardProps) {
   const toggleLikePost = useMutation(api.likes.toggleLikePost);
   const handleToggleLikePost = async () => {
-    const res = await toggleLikePost({ postId: post._id });
-    if (res !== true) return toast.error(res);
+    try {
+      await toggleLikePost({ postId: post._id });
+    } catch (error) {
+      error instanceof ConvexError
+        ? toast.error(error.message)
+        : toast.error("Post could not be liked. Please try again.");
+    }
   };
   return (
     <Button
@@ -198,8 +218,10 @@ function CommentForm({
   post,
   currentUser,
   comment,
+  close,
 }: PostCardProps & {
   comment?: Doc<"postComments"> | null;
+  close?: () => void;
 }) {
   const form = useForm<z.infer<typeof commentSchema>>({
     resolver: zodResolver(commentSchema),
@@ -212,9 +234,15 @@ function CommentForm({
 
   const addComment = useMutation(api.postComments.add);
   const handleAddComment = async (data: z.infer<typeof commentSchema>) => {
-    const res = await addComment(data);
-    if (res !== true) return toast.error(res);
-    form.reset();
+    try {
+      await addComment(data);
+      form.reset();
+      if (close) close();
+    } catch (error) {
+      error instanceof ConvexError
+        ? toast.error(error.message)
+        : toast.error("Comment could not be added. Please try again.");
+    }
   };
   return (
     <Form {...form}>
@@ -325,6 +353,7 @@ function CommentCard({
   post,
   currentUser,
   className,
+  parentCommentId,
 }: PostCardProps & {
   comment: Doc<"postComments"> & {
     user: Doc<"users"> | null;
@@ -333,24 +362,37 @@ function CommentCard({
     isLiked: boolean;
   };
   className?: string;
+  parentCommentId?: Id<"postComments">;
 }) {
   const { results: childCommentsResults } = usePaginatedQuery(
     api.postComments.getChildComments,
     { postId: post._id, commentId: comment._id },
     { initialNumItems: 3 },
   );
+  const [collapseForm, setCollapseForm] = useState(false);
   const removeComment = useMutation(api.postComments.remove);
   const toggleLike = useMutation(api.likes.toggleLikeComment);
   const handleRemoveComment = async () => {
-    const res = await removeComment({
-      commentId: comment._id,
-      postId: post._id,
-    });
-    if (res !== true) return toast.error(res);
+    try {
+      await removeComment({
+        commentId: comment._id,
+        postId: post._id,
+        parentCommentId,
+      });
+    } catch (error) {
+      error instanceof ConvexError
+        ? toast.error(error.message)
+        : toast.error("Comment could not be removed. Please try again.");
+    }
   };
   const handleToggleLike = async () => {
-    const res = await toggleLike({ commentId: comment._id });
-    if (res !== true) return toast.error(res);
+    try {
+      await toggleLike({ commentId: comment._id });
+    } catch (error) {
+      error instanceof ConvexError
+        ? toast.error(error.message)
+        : toast.error("Comment could not be liked. Please try again.");
+    }
   };
   return (
     <div
@@ -366,7 +408,7 @@ function CommentCard({
           {comment.user?.username}
         </p>
         <p>{comment.content}</p>
-        <Collapsible>
+        <Collapsible open={collapseForm} onOpenChange={setCollapseForm}>
           <div className="text-xs flex flex-wrap-reverse gap-x-4 gap-y-2 justify-between text-muted-foreground mt-3">
             <div className="flex gap-4 truncate [&>button]:hover:underline">
               <button onClick={() => void handleToggleLike()}>
@@ -374,7 +416,10 @@ function CommentCard({
                 {comment.likesCount ? `(${comment.likesCount})` : null}
               </button>
               <CollapsibleTrigger asChild>
-                <button>Reply</button>
+                <button>
+                  Reply{" "}
+                  {comment.commentsCount ? `(${comment.commentsCount})` : null}
+                </button>
               </CollapsibleTrigger>
               <button hidden={!comment.isMyComment} className="text-yellow-600">
                 Edit
@@ -396,11 +441,16 @@ function CommentCard({
               {new Date(comment._creationTime).toLocaleDateString()}
             </p>
           </div>
-          <CollapsibleContent className="mt-2 sm:mt-4 flex gap-2 w-full">
+          <CollapsibleContent className="mt-2 sm:mt-4 flex gap-2 w-full relative">
+            <div className="absolute -left-7 -top-5 flex flex-col items-center justify-center ">
+              <Slash className="text-muted-foreground/25 -rotate-45 -translate-x-2 -translate-y-4" />
+              <CornerDownRight className="text-muted-foreground/25" />
+            </div>
             <CommentForm
               currentUser={currentUser}
               post={post}
               comment={comment}
+              close={() => setCollapseForm(false)}
             />
           </CollapsibleContent>
         </Collapsible>
@@ -408,7 +458,8 @@ function CommentCard({
           <div className="flex flex-col gap-2 mt-4">
             {childCommentsResults.map((childComment) => (
               <div key={childComment._id} className="relative">
-                <div className="absolute -left-8 top-0">
+                <div className="absolute -left-7 -top-5 flex flex-col items-center justify-center ">
+                  <Slash className="text-muted-foreground/25 -rotate-45 -translate-x-2 -translate-y-4" />
                   <CornerDownRight className="text-muted-foreground/25" />
                 </div>
                 <CommentCard
@@ -416,6 +467,7 @@ function CommentCard({
                   comment={childComment}
                   post={post}
                   currentUser={currentUser}
+                  parentCommentId={comment._id}
                 />
               </div>
             ))}
@@ -423,5 +475,37 @@ function CommentCard({
         ) : null}
       </div>
     </div>
+  );
+}
+
+function EditFormDialog({
+  post,
+  children,
+  confirm,
+}: PostCardProps & { children: React.ReactNode; confirm: () => void }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>{children}</DialogTrigger>
+      <DialogContent
+        showCloseButton={false}
+        className=" max-w-xl sm:max-w-xl p-2 sm:p-4 bg-transparent overflow-hidden border-0 shadow-none"
+      >
+        <ScrollArea>
+          <div className="flex flex-col gap-2 sm:gap-4 h-[60dvh] relative backdrop-blur  bg-background/50 rounded-md border">
+            <DialogHeader className="px-2 sm:px-4 pt-2 sm:pt-4">
+              <DialogTitle>Edit post</DialogTitle>
+            </DialogHeader>
+            <EditPostForm
+              post={post}
+              close={() => {
+                setOpen(false);
+                confirm();
+              }}
+            />
+          </div>
+        </ScrollArea>
+      </DialogContent>
+    </Dialog>
   );
 }

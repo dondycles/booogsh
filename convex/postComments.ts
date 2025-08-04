@@ -1,6 +1,8 @@
-import { v } from "convex/values";
+import { ConvexError, v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { paginationOptsValidator } from "convex/server";
+import { Doc, Id } from "./_generated/dataModel";
+import { api } from "./_generated/api";
 
 export const getPublicPostComments = query({
   args: {
@@ -20,11 +22,13 @@ export const getPublicPostComments = query({
     const post = await ctx.db.get(postId);
 
     if (!post) {
-      throw new Error("Post not found.");
+      throw new ConvexError("Post not found.");
     }
 
     if (userDbData?._id !== post.userId && post.privacy !== "public") {
-      throw new Error("You are not authorized to see comments on this post.");
+      throw new ConvexError(
+        "You are not authorized to see comments on this post.",
+      );
     }
 
     const results = await ctx.db
@@ -87,16 +91,13 @@ export const getChildComments = query({
 
     const post = await ctx.db.get(postId);
     if (!post) {
-      throw new Error("Post not found.");
+      throw new ConvexError("Post not found.");
     }
 
     if (userDbData?._id !== post.userId && post.privacy !== "public") {
-      throw new Error("You are not authorized to see comments on this post.");
-    }
-
-    const parentComment = await ctx.db.get(commentId);
-    if (!parentComment) {
-      throw new Error("Parent comment not found.");
+      throw new ConvexError(
+        "You are not authorized to see comments on this post.",
+      );
     }
 
     const results = await ctx.db
@@ -139,6 +140,7 @@ export const getChildComments = query({
     };
   },
 });
+
 export const add = mutation({
   args: {
     postId: v.id("posts"),
@@ -148,7 +150,7 @@ export const add = mutation({
   handler: async (ctx, { postId, content, commentId }) => {
     const user = await ctx.auth.getUserIdentity();
     if (!user) {
-      return "You must be signed in to like a post.";
+      throw new ConvexError("You must be signed in to like a post.");
     }
 
     const userDbData = await ctx.db
@@ -159,43 +161,53 @@ export const add = mutation({
       .unique();
 
     if (!userDbData) {
-      return "No user found with the provided token identifier.";
+      throw new ConvexError(
+        "No user found with the provided token identifier.",
+      );
     }
 
     const post = await ctx.db.get(postId);
     if (!post) {
-      return "Post not found.";
+      throw new ConvexError("Post not found.");
     }
 
     if (post.privacy !== "public" && post.userId !== userDbData._id) {
-      return "You are not authorized to comment on this post.";
+      throw new ConvexError("You are not authorized to comment on this post.");
     }
 
     await ctx.db.patch(post._id, {
       commentsCount: post.commentsCount ? post.commentsCount + 1 : 1,
     });
 
-    const res = await ctx.db.insert("postComments", {
+    if (commentId) {
+      const parentComment = await ctx.db.get(commentId);
+      if (parentComment) {
+        await ctx.db.patch(commentId, {
+          commentsCount: parentComment.commentsCount
+            ? parentComment.commentsCount + 1
+            : 1,
+        });
+      }
+    }
+    await ctx.db.insert("postComments", {
       content: content,
       postId: postId,
       userId: userDbData._id,
       commentId,
     });
-
-    if (!res) {
-      return "Failed to add comment.";
-    }
-    return true;
   },
 });
 
 export const remove = mutation({
-  args: { commentId: v.id("postComments"), postId: v.id("posts") },
-  handler: async (ctx, { commentId, postId }) => {
+  args: {
+    commentId: v.id("postComments"),
+    postId: v.id("posts"),
+    parentCommentId: v.optional(v.id("postComments")),
+  },
+  handler: async (ctx, { commentId, postId, parentCommentId }) => {
     const user = await ctx.auth.getUserIdentity();
-    if (!user) {
-      return "You must be signed in to remove a comment.";
-    }
+    if (!user)
+      throw new ConvexError("You must be signed in to remove a comment.");
 
     const userDbData = await ctx.db
       .query("users")
@@ -203,47 +215,106 @@ export const remove = mutation({
         q.eq("tokenIdentifier", user.tokenIdentifier),
       )
       .unique();
-
-    if (!userDbData) {
-      return "No user found with the provided token identifier.";
-    }
+    if (!userDbData) throw new ConvexError("No user found.");
 
     const comment = await ctx.db.get(commentId);
-    if (!comment) {
-      return "Comment not found.";
-    }
+    if (!comment) throw new ConvexError("Comment not found.");
 
     const post = await ctx.db.get(postId);
-    if (!post) {
-      return "Post not found.";
-    }
+    if (!post) throw new ConvexError("Post not found.");
 
     if (comment.userId !== userDbData._id && post.userId !== userDbData._id) {
-      return "You are not authorized to delete this comment.";
+      throw new ConvexError("You are not authorized to delete this comment.");
     }
 
-    const childrenComments = await ctx.db
-      .query("postComments")
+    const descendants = await ctx.runQuery(
+      api.postComments.getAllDescendantComments,
+      {
+        parentId: commentId,
+      },
+    );
+    await Promise.all(descendants.flat().map((c) => ctx.db.delete(c._id)));
+
+    const commentsLikes = await Promise.all(
+      descendants.map((c) =>
+        ctx.db
+          .query("postCommentLikes")
+          .withIndex("byComment", (q) => q.eq("commentId", c._id))
+          .collect(),
+      ),
+    );
+    await Promise.all(
+      commentsLikes.flat().map((like) => ctx.db.delete(like._id)),
+    );
+
+    const parentCommentLike = await ctx.db
+      .query("postCommentLikes")
       .withIndex("byComment", (q) => q.eq("commentId", commentId))
-      .collect();
+      .first();
 
-    if (childrenComments.length > 0) {
-      await Promise.all(
-        childrenComments.map(async (childComment) => {
-          await ctx.db.delete(childComment._id);
-        }),
-      );
+    if (parentCommentLike) {
+      await ctx.db.delete(parentCommentLike._id);
     }
 
-    await ctx.db.patch(post._id, {
-      commentsCount: post.commentsCount
-        ? childrenComments.length > 0
-          ? post.commentsCount - (childrenComments.length + 1)
-          : post.commentsCount - 1
-        : 0,
-    });
     await ctx.db.delete(commentId);
+    if (parentCommentId) {
+      const parentComment = await ctx.db.get(parentCommentId);
+      if (parentComment) {
+        await ctx.db.patch(parentCommentId, {
+          commentsCount: parentComment.commentsCount
+            ? parentComment.commentsCount - 1
+            : 0,
+        });
+      }
+    }
 
-    return true;
+    const totalDeleted = descendants.length + 1;
+    await ctx.db.patch(post._id, {
+      commentsCount: Math.max((post.commentsCount ?? 0) - totalDeleted, 0),
+    });
+  },
+});
+
+export const getAllDescendantComments = query({
+  args: { parentId: v.id("postComments") },
+  handler: async (ctx, { parentId }) => {
+    const descendants: Doc<"postComments">[] = [];
+
+    async function recurse(id: Id<"postComments">) {
+      const children = await ctx.db
+        .query("postComments")
+        .withIndex("byComment", (q) => q.eq("commentId", id))
+        .collect();
+
+      for (const child of children) {
+        descendants.push(child);
+        await recurse(child._id);
+      }
+    }
+
+    await recurse(parentId);
+    return descendants;
+  },
+});
+
+export const getAllDescendantCommentLikes = query({
+  args: { parentId: v.id("postComments") },
+  handler: async (ctx, { parentId }) => {
+    const descendants: Doc<"postComments">[] = [];
+
+    async function recurse(id: Id<"postComments">) {
+      const children = await ctx.db
+        .query("postComments")
+        .withIndex("byComment", (q) => q.eq("commentId", id))
+        .collect();
+
+      for (const child of children) {
+        descendants.push(child);
+        await recurse(child._id);
+      }
+    }
+
+    await recurse(parentId);
+    return descendants;
   },
 });

@@ -36,6 +36,7 @@ export default defineSchema({
     commentId: v.optional(v.id("postComments")),
     userId: v.id("users"),
     likesCount: v.optional(v.number()),
+    commentsCount: v.optional(v.number()),
   })
     .index("byPost", ["postId"])
     .index("byComment", ["commentId"])

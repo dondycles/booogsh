@@ -3,6 +3,8 @@ import { useEffect, useState } from "react";
 import { useMutation } from "convex/react";
 import { api } from "../convex/_generated/api";
 import { Doc } from "@/convex/_generated/dataModel";
+import { toast } from "sonner";
+import { ConvexError } from "convex/values";
 
 export function useStoreUserEffect() {
   const { user, isLoaded, isSignedIn } = useUser();
@@ -19,16 +21,25 @@ export function useStoreUserEffect() {
     }
 
     async function createUser() {
-      const userData = await storeUser({
-        info: {
-          email: user?.primaryEmailAddress?.emailAddress ?? "",
-          name: user?.fullName ?? "Anonymous",
-          username: user?.username ?? "",
-          pfp: user?.imageUrl ?? "",
-        },
-      });
-      setUserDb(userData);
-      setIsLoadingUserDb(false);
+      try {
+        setUserDb(
+          await storeUser({
+            info: {
+              email: user?.primaryEmailAddress?.emailAddress ?? "",
+              name: user?.fullName ?? "Anonymous",
+              username: user?.username ?? "",
+              pfp: user?.imageUrl ?? "",
+            },
+          }),
+        );
+        setIsLoadingUserDb(false);
+      } catch (error) {
+        if (error instanceof ConvexError) {
+          toast.error(error.message);
+        } else {
+          toast.error("User could not be created. Please try again.");
+        }
+      }
     }
     createUser();
 

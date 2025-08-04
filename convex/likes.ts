@@ -1,4 +1,4 @@
-import { v } from "convex/values";
+import { ConvexError, v } from "convex/values";
 import { mutation } from "./_generated/server";
 
 export const toggleLikePost = mutation({
@@ -6,7 +6,7 @@ export const toggleLikePost = mutation({
   handler: async (ctx, { postId }) => {
     const user = await ctx.auth.getUserIdentity();
     if (!user) {
-      return "You must be signed in to like a post.";
+      throw new ConvexError("You must be signed in to like a post.");
     }
 
     const userDbData = await ctx.db
@@ -17,17 +17,19 @@ export const toggleLikePost = mutation({
       .unique();
 
     if (!userDbData) {
-      return "No user found with the provided token identifier.";
+      throw new ConvexError(
+        "No user found with the provided token identifier.",
+      );
     }
 
     const post = await ctx.db.get(postId);
 
     if (!post) {
-      return "Post not found.";
+      throw new ConvexError("Post not found.");
     }
 
     if (post.privacy === "private" && post.userId !== userDbData._id) {
-      return "You are not authorized to like this post.";
+      throw new ConvexError("You are not authorized to like this post.");
     }
 
     const like = await ctx.db
@@ -51,7 +53,6 @@ export const toggleLikePost = mutation({
         userId: userDbData._id,
       });
     }
-    return true;
   },
 });
 
@@ -60,7 +61,7 @@ export const toggleLikeComment = mutation({
   handler: async (ctx, { commentId }) => {
     const user = await ctx.auth.getUserIdentity();
     if (!user) {
-      return "You must be signed in to like a post.";
+      throw new ConvexError("You must be signed in to like a post.");
     }
     const userDbData = await ctx.db
       .query("users")
@@ -70,13 +71,15 @@ export const toggleLikeComment = mutation({
       .unique();
 
     if (!userDbData) {
-      return "No user found with the provided token identifier.";
+      throw new ConvexError(
+        "No user found with the provided token identifier.",
+      );
     }
 
     const comment = await ctx.db.get(commentId);
 
     if (!comment) {
-      return "Comment not found.";
+      throw new ConvexError("Comment not found.");
     }
 
     const like = await ctx.db
@@ -100,6 +103,5 @@ export const toggleLikeComment = mutation({
         userId: userDbData._id,
       });
     }
-    return true;
   },
 });
