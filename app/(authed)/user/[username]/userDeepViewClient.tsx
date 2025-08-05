@@ -2,9 +2,7 @@
 import Avatar from "@/components/avatar";
 import { Button } from "@/components/ui/button";
 import { api } from "@/convex/_generated/api";
-import { Id } from "@/convex/_generated/dataModel";
-import { useStoreUserEffect } from "@/hooks/useStoreUserEffect";
-import { usePaginatedQuery, useQuery } from "convex/react";
+import { useQuery } from "convex/react";
 import UserPostsClient from "./userPosts";
 import Image from "next/image";
 import { CircleAlert, UserPlus } from "lucide-react";

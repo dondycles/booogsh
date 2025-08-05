@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { useStoreUserEffect } from "@/hooks/useStoreUserEffect";
 import { Loader2 } from "lucide-react";
 export default function UserPostsClient({ userId }: { userId: Id<"users"> }) {
-  const { isAuthenticated, user, isLoading } = useStoreUserEffect();
+  const { user, isLoading } = useStoreUserEffect();
   const {
     isLoading: isLoadingMorePosts,
     loadMore: loadMorePosts,

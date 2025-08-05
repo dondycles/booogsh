@@ -135,10 +135,7 @@ function Header({ children }: { children?: React.ReactNode }) {
 }
 
 function Body() {
-  const { post, currentUser } = usePostContext();
-  const sharedPost = post.sharedPostId
-    ? useQuery(api.posts.getSharedPost, { postId: post.sharedPostId })
-    : null;
+  const { post } = usePostContext();
   return (
     <>
       <Link href={`/post/${post._id}`}>
@@ -146,36 +143,46 @@ function Body() {
           {post.message}
         </h1>
       </Link>
-      {sharedPost ? (
-        <div className="px-2 sm:px-4">
-          {!sharedPost._id ? (
-            <Link href={`/post/${post.sharedPostId}`}>
-              <h1 className="whitespace-pre-wrap text-sm text-muted-foreground bg-accent p-2 sm:p-4 rounded-md italic">
-                Post is private or does not exist.
-              </h1>
-            </Link>
-          ) : (
-            <div className="border rounded-md">
-              <Card
-                post={sharedPost as PostCardProps["post"]}
-                currentUser={currentUser}
-              >
-                <Header>
-                  <PostOptions />
-                </Header>
-                <Body />
-                <Footer>
-                  <LikeButton />
-                  <CommentButton />
-                  <ShareButton />
-                </Footer>
-              </Card>
-            </div>
-          )}
-        </div>
+      {post.sharedPostId ? (
+        <SharedPost sharedPostId={post.sharedPostId} />
       ) : null}
     </>
   );
+}
+
+function SharedPost({ sharedPostId }: { sharedPostId: Id<"posts"> }) {
+  const { post, currentUser } = usePostContext();
+  const sharedPost = useQuery(api.posts.getSharedPost, {
+    postId: sharedPostId,
+  });
+  return sharedPost ? (
+    <div className="px-2 sm:px-4">
+      {!sharedPost._id ? (
+        <Link href={`/post/${post.sharedPostId}`}>
+          <h1 className="whitespace-pre-wrap text-sm text-muted-foreground bg-accent p-2 sm:p-4 rounded-md italic">
+            Post is private or does not exist.
+          </h1>
+        </Link>
+      ) : (
+        <div className="border rounded-md">
+          <Card
+            post={sharedPost as PostCardProps["post"]}
+            currentUser={currentUser}
+          >
+            <Header>
+              <PostOptions />
+            </Header>
+            <Body />
+            <Footer>
+              <LikeButton />
+              <CommentButton />
+              <ShareButton />
+            </Footer>
+          </Card>
+        </div>
+      )}
+    </div>
+  ) : null;
 }
 
 function Footer({ children }: { children?: React.ReactNode }) {
