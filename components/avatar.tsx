@@ -2,7 +2,7 @@ import { Doc } from "@/convex/_generated/dataModel";
 import { UserCircle2 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import UserDotStatus from "./user-dot-status";
+import * as UserDotStatus from "./user-dot-status";
 import { cn } from "@/lib/utils";
 
 export default function Avatar({
@@ -10,13 +10,17 @@ export default function Avatar({
   size = 40,
   disableLink = false,
   showDotStatus = false,
+  showDotStatusTooltip = false,
   dotStatusClassName,
+  dotStatusTooltipClassName,
 }: {
   user: Doc<"users"> | null;
   size?: number;
   disableLink?: boolean;
   showDotStatus?: boolean;
   dotStatusClassName?: string;
+  dotStatusTooltipClassName?: string;
+  showDotStatusTooltip?: boolean;
 }) {
   return user?.pfp ? (
     disableLink ? (
@@ -36,11 +40,27 @@ export default function Avatar({
               dotStatusClassName,
             )}
           >
-            <UserDotStatus
-              activityStatus={user.activityStatus}
-              lastActivity={user.lastActivity}
-              className={cn("h-full w-full stroke-12", dotStatusClassName)}
-            />
+            <UserDotStatus.Context
+              value={{
+                lastActivity: user.lastActivity,
+                activityStatus: user.activityStatus,
+              }}
+            >
+              {showDotStatusTooltip ? (
+                <UserDotStatus.Tooltip className={dotStatusTooltipClassName}>
+                  <UserDotStatus.Dot
+                    className={cn(
+                      "h-full w-full stroke-12",
+                      dotStatusClassName,
+                    )}
+                  />
+                </UserDotStatus.Tooltip>
+              ) : (
+                <UserDotStatus.Dot
+                  className={cn("h-full w-full stroke-12", dotStatusClassName)}
+                />
+              )}
+            </UserDotStatus.Context>
           </div>
         ) : null}
       </div>
@@ -63,11 +83,27 @@ export default function Avatar({
               dotStatusClassName,
             )}
           >
-            <UserDotStatus
-              activityStatus={user.activityStatus}
-              lastActivity={user.lastActivity}
-              className={cn("h-full w-full stroke-12", dotStatusClassName)}
-            />
+            <UserDotStatus.Context
+              value={{
+                lastActivity: user.lastActivity,
+                activityStatus: user.activityStatus,
+              }}
+            >
+              {showDotStatusTooltip ? (
+                <UserDotStatus.Tooltip className={dotStatusTooltipClassName}>
+                  <UserDotStatus.Dot
+                    className={cn(
+                      "h-full w-full stroke-12",
+                      dotStatusClassName,
+                    )}
+                  />
+                </UserDotStatus.Tooltip>
+              ) : (
+                <UserDotStatus.Dot
+                  className={cn("h-full w-full stroke-12", dotStatusClassName)}
+                />
+              )}
+            </UserDotStatus.Context>
           </div>
         ) : null}
       </div>

@@ -111,7 +111,12 @@ function Header({ children }: { children?: React.ReactNode }) {
   return (
     <div className="flex place-items-start justify-between text-muted-foreground gap-2 px-2 sm:px-4">
       <div className="flex gap-2 items-start truncate">
-        <Avatar user={post.user} showDotStatus dotStatusClassName="stroke-12" />
+        <Avatar
+          user={post.user}
+          showDotStatus
+          showDotStatusTooltip
+          dotStatusClassName="stroke-12"
+        />
         <div className="space-y-1 inline-flex flex-col">
           <Username
             username={post.user?.username}

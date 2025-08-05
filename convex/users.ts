@@ -67,11 +67,9 @@ export const getUserProfile = query({
   },
 });
 
-export const setUserActivity = mutation({
-  args: {
-    activityStatus: v.union(v.literal("visible"), v.literal("hidden")),
-  },
-  handler: async (ctx, { activityStatus }) => {
+export const toggleUserActivityStatus = mutation({
+  args: {},
+  handler: async (ctx) => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) {
       throw new ConvexError("You must be signed in to set user activity.");
@@ -88,7 +86,8 @@ export const setUserActivity = mutation({
     }
 
     await ctx.db.patch(currentUserDbData._id, {
-      activityStatus,
+      activityStatus:
+        currentUserDbData.activityStatus === "hidden" ? "visible" : "hidden",
     });
   },
 });

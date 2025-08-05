@@ -30,6 +30,7 @@ export default function UserDeepViewClient({ username }: { username: string }) {
             size={72}
             showDotStatus
             dotStatusClassName="size-6 stroke-12"
+            showDotStatusTooltip
           />
         </div>
         <div className="mx-auto text-center z-1">

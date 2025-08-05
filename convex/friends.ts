@@ -193,10 +193,14 @@ export const getFriendships = query({
         return {
           ...friend,
           ...friendData,
+          activityStatus:
+            currentUserDbData.activityStatus === "hidden"
+              ? "hidden"
+              : friendData?.activityStatus,
         };
       }),
     );
 
-    return friendsWithData;
+    return { friendsWithData, currentUserDbData };
   },
 });

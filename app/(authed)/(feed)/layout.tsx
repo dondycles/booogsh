@@ -1,6 +1,6 @@
 import CustomUserButton from "@/components/custom-user-button";
 import IsMobile from "@/components/is-mobile";
-import OnlineFriends from "@/components/online-friends";
+import Friends from "@/components/friends";
 import { Button } from "@/components/ui/button";
 import { SignedIn } from "@clerk/nextjs";
 import { MessageCircle, Users2 } from "lucide-react";
@@ -50,7 +50,7 @@ export default function FeedLayout({
       {children}
       <IsMobile MOBILE_BREAKPOINT={1024}>
         <SignedIn>
-          <OnlineFriends />
+          <Friends />
         </SignedIn>
       </IsMobile>
     </div>
