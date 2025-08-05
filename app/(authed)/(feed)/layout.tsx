@@ -17,7 +17,7 @@ export default function FeedLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="grid lg:grid-cols-[1fr_minmax(0px,576px)_1fr] bg-background text-foreground relative z-0">
+    <div className="grid grid-cols-[1fr_minmax(0px,576px)_1fr] bg-background text-foreground relative z-0">
       <IsMobile MOBILE_BREAKPOINT={1024}>
         <SignedIn>
           <div className="fixed bottom-0 left-0 h-[calc(100vh-60px)] w-[calc((100vw-590px)/2)] flex flex-col p-2 sm:p-4 ">
