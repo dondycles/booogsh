@@ -36,7 +36,7 @@ export default function Avatar({
         {showDotStatus ? (
           <div
             className={cn(
-              "absolute bottom-0 right-0 bg-muted rounded-full aspect-square size-4",
+              "absolute bottom-0 right-0 aspect-square size-auto grid bg-muted rounded-full",
               dotStatusClassName,
             )}
           >
@@ -79,7 +79,7 @@ export default function Avatar({
         {showDotStatus ? (
           <div
             className={cn(
-              "absolute bottom-0 right-0 bg-muted rounded-full aspect-square size-4",
+              "absolute bottom-0 right-0 aspect-square size-auto grid bg-muted rounded-full",
               dotStatusClassName,
             )}
           >

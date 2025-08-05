@@ -115,7 +115,7 @@ function Header({ children }: { children?: React.ReactNode }) {
           user={post.user}
           showDotStatus
           showDotStatusTooltip
-          dotStatusClassName="stroke-12"
+          dotStatusClassName="stroke-12 size-4"
         />
         <div className="space-y-1 inline-flex flex-col">
           <Username
