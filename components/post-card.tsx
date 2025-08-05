@@ -74,7 +74,7 @@ export function usePostContext() {
   return context;
 }
 
-export default function PostCard({
+function Card({
   post,
   currentUser,
   className,
@@ -85,7 +85,7 @@ export default function PostCard({
 }) {
   if (!post._id)
     return (
-      <p className="text-muted-foreground text-sm italic  bg-muted rounded-md p-2 sm:p-4 text-center">
+      <p className="text-muted-foreground text-sm italic bg-muted rounded-md p-2 sm:p-4 text-center">
         Post not found
       </p>
     );
@@ -95,7 +95,7 @@ export default function PostCard({
       <div
         key={post._id}
         className={cn(
-          "flex flex-col gap-2 sm:gap-4 bg-muted rounded-md pt-2 sm:pt-4",
+          "flex flex-col gap-2 sm:gap-4 bg-muted rounded-md pt-2 sm:pt-4 overflow-hidden",
           className,
         )}
       >
@@ -105,7 +105,7 @@ export default function PostCard({
   );
 }
 
-function PostHeader({ children }: { children?: React.ReactNode }) {
+function Header({ children }: { children?: React.ReactNode }) {
   const { post, currentUser } = usePostContext();
   return (
     <div className="flex place-items-start justify-between text-muted-foreground gap-2 px-2 sm:px-4">
@@ -132,7 +132,7 @@ function PostHeader({ children }: { children?: React.ReactNode }) {
   );
 }
 
-function PostBody() {
+function Body() {
   const { post, currentUser } = usePostContext();
   const sharedPost = post.sharedPostId
     ? useQuery(api.posts.getSharedPost, { postId: post.sharedPostId })
@@ -154,16 +154,20 @@ function PostBody() {
             </Link>
           ) : (
             <div className="border rounded-md">
-              <PostCard
+              <Card
                 post={sharedPost as PostCardProps["post"]}
                 currentUser={currentUser}
               >
-                <PostHeader>
+                <Header>
                   <PostOptions />
-                </PostHeader>
-                <PostBody />
-                <PostFooter />
-              </PostCard>
+                </Header>
+                <Body />
+                <Footer>
+                  <LikeButton />
+                  <CommentButton />
+                  <ShareButton />
+                </Footer>
+              </Card>
             </div>
           )}
         </div>
@@ -172,15 +176,15 @@ function PostBody() {
   );
 }
 
-function PostFooter({ children }: { children?: React.ReactNode }) {
+function Footer({ children }: { children?: React.ReactNode }) {
   return (
-    <div className="flex [&>*]:flex-1 gap-px mt-4 h-10 bg-accent/30 rounded-b-md">
+    <div className="flex [&>*]:flex-1 gap-px mt-4 h-10 bg-accent/30">
       {children}
     </div>
   );
 }
 
-function PostShareButton() {
+function ShareButton() {
   const { post, currentUser } = usePostContext();
   const [open, setOpen] = useState(false);
   return (
@@ -208,18 +212,25 @@ function PostShareButton() {
             className="rounded-none"
             close={() => setOpen(false)}
           />
-          <PostCard
+          <Card
             post={post}
             currentUser={currentUser}
             className="rounded-none mt-2 sm:mt-4"
-          />
+          >
+            <Header />
+            <Body />
+            <Footer>
+              <LikeButton />
+              <CommentButton />
+            </Footer>
+          </Card>
         </div>
       </DialogContent>
     </Dialog>
   );
 }
 
-function PostLikeButton() {
+function LikeButton() {
   const { post } = usePostContext();
   const toggleLikePost = useMutation(api.likes.toggleLikePost);
   const handleToggleLikePost = async () => {
@@ -249,7 +260,7 @@ function PostLikeButton() {
   );
 }
 
-function PostCommentButton() {
+function CommentButton() {
   const { post } = usePostContext();
   return (
     <PostDialog>
@@ -280,19 +291,19 @@ function PostDialog({ children }: { children: React.ReactNode }) {
             <DialogHeader className="sr-only">
               <DialogTitle>Comments</DialogTitle>
             </DialogHeader>
-            <PostCard
+            <Card
               currentUser={currentUser}
               post={post}
               className="rounded-b-none border-b"
             >
-              <PostHeader />
-              <PostBody />
-              <PostFooter>
-                <PostLikeButton />
-                <PostShareButton />
-              </PostFooter>
-            </PostCard>
-            <PostComments />
+              <Header />
+              <Body />
+              <Footer>
+                <LikeButton />
+                <ShareButton />
+              </Footer>
+            </Card>
+            <Comments />
           </div>
         </ScrollArea>
       </DialogContent>
@@ -426,7 +437,7 @@ function CommentForm({
   );
 }
 
-function PostComments() {
+function Comments() {
   const { post, currentUser } = usePostContext();
   const {
     isLoading: isLoadingMoreComments,
@@ -662,16 +673,17 @@ function EditFormDialog({
 }
 
 export {
+  Card,
   PostOptions,
   CommentForm,
   CommentCard,
   PostDialog,
   EditFormDialog,
-  PostHeader,
-  PostBody,
-  PostFooter,
-  PostShareButton,
-  PostLikeButton,
-  PostCommentButton,
-  PostComments,
+  Header,
+  Body,
+  Footer,
+  ShareButton,
+  LikeButton,
+  CommentButton,
+  Comments,
 };

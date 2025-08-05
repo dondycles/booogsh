@@ -1,14 +1,5 @@
 "use client";
-import PostCard, {
-  PostBody,
-  PostCardProps,
-  PostComments,
-  PostFooter,
-  PostHeader,
-  PostLikeButton,
-  PostOptions,
-  PostShareButton,
-} from "@/components/post-card";
+import * as Post from "@/components/post-card";
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
 import { useStoreUserEffect } from "@/hooks/useStoreUserEffect";
@@ -23,16 +14,16 @@ export default function PostDeepViewClient({
   const post = useQuery(api.posts.getPostDeepView, { postId });
   if (!post) return;
   return (
-    <PostCard currentUser={user} post={post as PostCardProps["post"]}>
-      <PostHeader>
-        <PostOptions />
-      </PostHeader>
-      <PostBody />
-      <PostFooter>
-        <PostLikeButton />
-        <PostShareButton />
-      </PostFooter>
-      <PostComments />
-    </PostCard>
+    <Post.Card currentUser={user} post={post as Post.PostCardProps["post"]}>
+      <Post.Header>
+        <Post.PostOptions />
+      </Post.Header>
+      <Post.Body />
+      <Post.Footer>
+        <Post.LikeButton />
+        <Post.ShareButton />
+      </Post.Footer>
+      <Post.Comments />
+    </Post.Card>
   );
 }
