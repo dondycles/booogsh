@@ -14,16 +14,18 @@ export default function UserDeepViewClient({ username }: { username: string }) {
   const { user: currentUser } = useStoreUserEffect();
   const userProfile = useQuery(api.users.getUserProfile, { username });
 
+  if (!userProfile) return;
+
   if (!userProfile?._id)
     return (
-      <p className="text-muted-foreground text-sm italic bg-muted rounded-md p-2 sm:p-4 text-center">
+      <p className="text-muted-foreground text-sm italic bg-muted rounded-md p-2 sm:p-4 text-center col-start-2">
         User not found
       </p>
     );
 
   return (
-    <main className="p-2 sm:p-4 flex flex-col gap-2 sm:gap-4 w-full">
-      <div className="flex flex-col gap-2 sm:gap-4 items-center justify-center bg-muted px-2 sm:px-4 py-8 sm:py-16 relative [&>div]:drop-shadow-2xl [&>div]:z-10 overflow-hidden -mx-4 -mt-4">
+    <main className="p-2 sm:p-4 flex flex-col gap-2 sm:gap-4 w-full col-start-2">
+      <div className="flex flex-col gap-2 sm:gap-4 items-center justify-center bg-muted px-2 sm:px-4 py-8 sm:py-16 relative [&>div]:drop-shadow-2xl [&>div]:z-10 overflow-hidden rounded-b-md -mt-4">
         <div>
           <Avatar
             user={userProfile}
