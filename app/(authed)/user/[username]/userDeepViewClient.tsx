@@ -20,7 +20,7 @@ export default function UserDeepViewClient({ username }: { username: string }) {
 
   return (
     <main className="p-2 sm:p-4 flex flex-col gap-2 sm:gap-4 w-full">
-      <div className="flex flex-col gap-2 sm:gap-4 items-center justify-center bg-muted rounded-md px-2 sm:px-4 py-8 sm:py-16 relative [&>div]:drop-shadow-2xl [&>div]:z-10 overflow-hidden">
+      <div className="flex flex-col gap-2 sm:gap-4 items-center justify-center bg-muted px-2 sm:px-4 py-8 sm:py-16 relative [&>div]:drop-shadow-2xl [&>div]:z-10 overflow-hidden -mx-4 -mt-4">
         <div>
           <Avatar user={userProfile} size={72} />
         </div>
