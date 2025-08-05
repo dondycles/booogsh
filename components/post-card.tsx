@@ -56,6 +56,7 @@ import { ConvexError } from "convex/values";
 import AddPostForm from "./forms/add-post-form";
 import Link from "next/link";
 import { createContext, useContext } from "react";
+import Username from "./username";
 export interface PostCardProps {
   post: Doc<"posts"> & {
     user: Doc<"users"> | null;
@@ -112,11 +113,12 @@ function Header({ children }: { children?: React.ReactNode }) {
       <div className="flex gap-2 items-start truncate">
         <Avatar user={post.user} />
         <div className="space-y-1 inline-flex flex-col">
-          <span className="text-sm font-semibold">
-            {post.user?.username === currentUser?.username
-              ? `${post.user?.username} (You)`
-              : post.user?.username}
-          </span>
+          <Username
+            username={post.user?.username}
+            showYou={post.user?.username === currentUser?.username}
+            showAtSymbol
+            className="text-sm font-semibold text-foreground"
+          />
           <div className="text-xs space-x-1 inline-flex">
             <span>
               {post.privacy === "public" && <Globe2 className="size-4" />}
@@ -549,10 +551,12 @@ function CommentCard({
     >
       <Avatar user={comment.user} size={32} />
       <div className="text-sm flex-1 space-y-1">
-        <p className="text-muted-foreground whitespace-pre-wrap">
-          {comment.user?.username}
-        </p>
-        <p>{comment.content}</p>
+        <Username
+          username={comment.user?.username}
+          showYou={comment.user?.username === currentUser?.username}
+          showAtSymbol
+        />
+        <p className="mt-1">{comment.content}</p>
         <Collapsible open={collapseForm} onOpenChange={setCollapseForm}>
           <div className="text-xs flex flex-wrap-reverse gap-x-4 gap-y-2 justify-between text-muted-foreground mt-3">
             <div className="flex gap-4 truncate [&>button]:hover:underline">
@@ -674,14 +678,10 @@ function EditFormDialog({
 
 export {
   Card,
-  PostOptions,
-  CommentForm,
-  CommentCard,
-  PostDialog,
-  EditFormDialog,
   Header,
   Body,
   Footer,
+  PostOptions,
   ShareButton,
   LikeButton,
   CommentButton,

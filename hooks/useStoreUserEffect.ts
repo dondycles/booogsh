@@ -10,7 +10,7 @@ export function useStoreUserEffect() {
   const { user, isLoaded, isSignedIn } = useUser();
   const [isLoadingUserDb, setIsLoadingUserDb] = useState(true);
   const [userDb, setUserDb] = useState<null | Doc<"users">>(null);
-  const storeUser = useMutation(api.users.checkAndGetUser);
+  const storeUser = useMutation(api.users.checkAndGetCurrentUser);
 
   useEffect(() => {
     if (!isSignedIn) {

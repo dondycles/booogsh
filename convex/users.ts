@@ -1,7 +1,7 @@
 import { ConvexError, v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 
-export const checkAndGetUser = mutation({
+export const checkAndGetCurrentUser = mutation({
   args: {
     info: v.object({
       name: v.string(),
@@ -53,26 +53,14 @@ export const checkAndGetUser = mutation({
   },
 });
 
-export const authCheck = query({
-  args: {},
-  handler: async (ctx) => {
-    const user = await ctx.auth.getUserIdentity();
-    if (!user) {
-      throw new ConvexError("You must be signed in to like a post.");
-    }
-
-    const userDbData = await ctx.db
+export const getUserProfile = query({
+  args: {
+    username: v.string(),
+  },
+  handler: async (ctx, { username }) => {
+    return await ctx.db
       .query("users")
-      .withIndex("by_token", (q) =>
-        q.eq("tokenIdentifier", user.tokenIdentifier),
-      )
+      .withIndex("by_username", (q) => q.eq("username", username))
       .unique();
-
-    if (!userDbData) {
-      throw new ConvexError(
-        "No user found with the provided token identifier.",
-      );
-    }
-    return userDbData;
   },
 });

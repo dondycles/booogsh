@@ -11,7 +11,9 @@ export default defineSchema({
     username: v.string(),
     tokenIdentifier: v.string(),
     pfp: v.optional(v.string()),
-  }).index("by_token", ["tokenIdentifier"]),
+  })
+    .index("by_token", ["tokenIdentifier"])
+    .index("by_username", ["username"]),
   posts: defineTable({
     message: v.string(),
     userId: v.id("users"),
@@ -51,4 +53,12 @@ export default defineSchema({
   })
     .index("byCommentAndUser", ["commentId", "userId"])
     .index("byComment", ["commentId"]),
+  friends: defineTable({
+    userId: v.id("users"),
+    friendId: v.id("users"),
+    status: v.union(v.literal("pending"), v.literal("accepted")),
+    acceptedAt: v.optional(v.string()),
+  })
+    .index("byUserAndFriend", ["userId", "friendId"])
+    .index("byFriendAndUser", ["friendId", "userId"]),
 });

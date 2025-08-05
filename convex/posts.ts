@@ -80,6 +80,88 @@ export const getPublicPosts = query({
   },
 });
 
+export const getPublicPostsOfThisUser = query({
+  args: {
+    paginationOpts: paginationOptsValidator,
+    userId: v.id("users"),
+  },
+  handler: async (ctx, args) => {
+    const currentUser = await ctx.auth.getUserIdentity();
+    const currentUserDbData = currentUser
+      ? await ctx.db
+          .query("users")
+          .withIndex("by_token", (q) =>
+            q.eq("tokenIdentifier", currentUser.tokenIdentifier),
+          )
+          .unique()
+      : null;
+
+    if (!currentUser) {
+      const results = await ctx.db
+        .query("posts")
+        .filter((q) => q.eq(q.field("privacy"), "public"))
+        .order("desc")
+        .paginate(args.paginationOpts);
+
+      const mappedPage = await Promise.all(
+        results.page.map(async (post) => {
+          const user = await ctx.db.get(post.userId);
+          return {
+            ...post,
+            user,
+            isLiked: false,
+          };
+        }),
+      );
+
+      return {
+        ...results,
+        page: mappedPage,
+      };
+    }
+
+    const results = await ctx.db
+      .query("posts")
+      .filter((q) =>
+        q.and(
+          q.or(
+            q.eq(q.field("privacy"), "public"),
+            q.eq(q.field("userId"), currentUserDbData?._id),
+          ),
+          q.eq(q.field("userId"), args.userId),
+        ),
+      )
+      .order("desc")
+      .paginate(args.paginationOpts);
+
+    const mappedPage = await Promise.all(
+      results.page.map(async (post) => {
+        const user = await ctx.db.get(post.userId);
+        const isLiked = currentUserDbData
+          ? await ctx.db
+              .query("postLikes")
+              .withIndex("byPostAndUser", (q) =>
+                q.eq("postId", post._id).eq("userId", currentUserDbData._id),
+              )
+              .unique()
+          : null;
+
+        return {
+          ...post,
+          user,
+          isLiked: !!isLiked,
+          // sharedPost: null,
+        };
+      }),
+    );
+
+    return {
+      ...results,
+      page: mappedPage,
+    };
+  },
+});
+
 export const getSharedPost = query({
   args: { postId: v.id("posts") },
   handler: async (ctx, { postId }) => {

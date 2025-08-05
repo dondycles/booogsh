@@ -9,7 +9,6 @@ import {
   DropdownMenuTrigger,
 } from "./ui/dropdown-menu";
 import { useStoreUserEffect } from "@/hooks/useStoreUserEffect";
-import Image from "next/image";
 import { Button } from "./ui/button";
 import {
   Dialog,
@@ -21,6 +20,8 @@ import {
 import { cn } from "@/lib/utils";
 import { Skeleton } from "./ui/skeleton";
 import Link from "next/link";
+import Avatar from "./avatar";
+import Username from "./username";
 
 export default function CustomUserButton({
   className,
@@ -65,19 +66,12 @@ export default function CustomUserButton({
         className={cn("flex flex-row gap-2 h-fit", className)}
         asChild
       >
-        <Link href={`/u/${user?.username}`} className="flex items-center gap-2">
-          {showName ? <p>{user?.username}</p> : null}
-          {user?.pfp ? (
-            <Image
-              src={user?.pfp}
-              alt={user?.username + "'s profile picture"}
-              width={32}
-              height={32}
-              className="rounded-full"
-            />
-          ) : (
-            <UserCircle2 className="size-5 shrink-0 text-foreground" />
-          )}
+        <Link
+          href={`/user/${user?.username}`}
+          className="flex items-center gap-2"
+        >
+          {showName ? <Username username={user?.username} disableLink /> : null}
+          <Avatar user={user} size={32} disableLink />
         </Link>
       </Button>
     );
@@ -89,18 +83,10 @@ export default function CustomUserButton({
             variant={variant}
             className={cn("flex flex-row gap-2 h-fit", className)}
           >
-            {showName ? <p>{user?.username}</p> : null}
-            {user?.pfp ? (
-              <Image
-                src={user?.pfp}
-                alt={user?.username + "'s profile picture"}
-                width={32}
-                height={32}
-                className="rounded-full"
-              />
-            ) : (
-              <UserCircle2 className="size-5 shrink-0 text-foreground" />
-            )}
+            {showName ? (
+              <Username username={user?.username} disableLink />
+            ) : null}
+            <Avatar user={user} size={32} disableLink />
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent className="z-150">
