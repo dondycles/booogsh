@@ -18,7 +18,7 @@ export default function AuthedLayout({
         <IsMobile MOBILE_BREAKPOINT={1024}>
           <SignedIn>
             <div className="fixed bottom-0 left-0 h-dvh w-[calc((100vw-590px)/2)] flex items-start justify-end">
-              <div className="flex flex-col p-2 sm:p-4 max-w-sm w-full gap-2 sm:gap-4">
+              <div className="flex flex-col p-2 sm:p-4 max-w-sm w-full ">
                 <CustomUserButton
                   asLink
                   className="flex-row-reverse justify-end text-base font-semibold"
