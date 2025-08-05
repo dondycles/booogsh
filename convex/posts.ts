@@ -7,17 +7,17 @@ export const getPublicPosts = query({
     paginationOpts: paginationOptsValidator,
   },
   handler: async (ctx, args) => {
-    const user = await ctx.auth.getUserIdentity();
-    const userDbData = user
+    const currentUser = await ctx.auth.getUserIdentity();
+    const currentUserDbData = currentUser
       ? await ctx.db
           .query("users")
           .withIndex("by_token", (q) =>
-            q.eq("tokenIdentifier", user.tokenIdentifier),
+            q.eq("tokenIdentifier", currentUser.tokenIdentifier),
           )
           .unique()
       : null;
 
-    if (!userDbData) {
+    if (!currentUser) {
       const results = await ctx.db
         .query("posts")
         .filter((q) => q.eq(q.field("privacy"), "public"))
@@ -46,7 +46,7 @@ export const getPublicPosts = query({
       .filter((q) =>
         q.or(
           q.eq(q.field("privacy"), "public"),
-          q.eq(q.field("userId"), userDbData?._id),
+          q.eq(q.field("userId"), currentUserDbData?._id),
         ),
       )
       .order("desc")
@@ -55,45 +55,20 @@ export const getPublicPosts = query({
     const mappedPage = await Promise.all(
       results.page.map(async (post) => {
         const user = await ctx.db.get(post.userId);
-        const isLiked = userDbData
+        const isLiked = currentUserDbData
           ? await ctx.db
               .query("postLikes")
               .withIndex("byPostAndUser", (q) =>
-                q.eq("postId", post._id).eq("userId", userDbData._id),
+                q.eq("postId", post._id).eq("userId", currentUserDbData._id),
               )
               .unique()
           : null;
-
-        if (post.sharedPostId) {
-          const sharedPost = await ctx.db.get(post.sharedPostId);
-          if (!sharedPost) throw new ConvexError("Shared post not found.");
-          const user = await ctx.db.get(sharedPost?.userId);
-          const sharedPostIsLiked = userDbData
-            ? await ctx.db
-                .query("postLikes")
-                .withIndex("byPostAndUser", (q) =>
-                  q.eq("postId", sharedPost._id).eq("userId", userDbData._id),
-                )
-                .unique()
-            : null;
-
-          return {
-            ...post,
-            user,
-            isLiked: !!isLiked,
-            sharedPost: {
-              ...sharedPost,
-              user,
-              isLiked: !!sharedPostIsLiked,
-            },
-          };
-        }
 
         return {
           ...post,
           user,
           isLiked: !!isLiked,
-          sharedPost: null,
+          // sharedPost: null,
         };
       }),
     );
@@ -101,6 +76,93 @@ export const getPublicPosts = query({
     return {
       ...results,
       page: mappedPage,
+    };
+  },
+});
+
+export const getSharedPost = query({
+  args: { postId: v.id("posts") },
+  handler: async (ctx, { postId }) => {
+    const currentUser = await ctx.auth.getUserIdentity();
+    const currentUserDbData = currentUser
+      ? await ctx.db
+          .query("users")
+          .withIndex("by_token", (q) =>
+            q.eq("tokenIdentifier", currentUser.tokenIdentifier),
+          )
+          .unique()
+      : null;
+
+    const post = await ctx.db
+      .query("posts")
+      .filter((q) =>
+        q.and(
+          q.or(
+            q.eq(q.field("privacy"), "public"),
+            q.eq(q.field("userId"), currentUserDbData?._id),
+          ),
+          q.eq(q.field("_id"), postId),
+        ),
+      )
+      .unique();
+
+    const user = post ? await ctx.db.get(post.userId) : null;
+
+    const isLiked =
+      post && currentUserDbData
+        ? await ctx.db
+            .query("postLikes")
+            .withIndex("byPostAndUser", (q) =>
+              q.eq("postId", post._id).eq("userId", currentUserDbData._id),
+            )
+            .unique()
+        : null;
+
+    return { ...post, user, isLiked: !!isLiked };
+  },
+});
+
+export const getPostDeepView = query({
+  args: { postId: v.id("posts") },
+  handler: async (ctx, { postId }) => {
+    const currentUser = await ctx.auth.getUserIdentity();
+    const currentUserDbData = currentUser
+      ? await ctx.db
+          .query("users")
+          .withIndex("by_token", (q) =>
+            q.eq("tokenIdentifier", currentUser.tokenIdentifier),
+          )
+          .unique()
+      : null;
+    const post = await ctx.db
+      .query("posts")
+      .filter((q) =>
+        q.and(
+          q.or(
+            q.eq(q.field("privacy"), "public"),
+            q.eq(q.field("userId"), currentUserDbData?._id),
+          ),
+          q.eq(q.field("_id"), postId),
+        ),
+      )
+      .unique();
+
+    const isLiked =
+      post && currentUserDbData
+        ? await ctx.db
+            .query("postLikes")
+            .withIndex("byPostAndUser", (q) =>
+              q.eq("postId", post._id).eq("userId", currentUserDbData._id),
+            )
+            .unique()
+        : null;
+
+    const user = post ? await ctx.db.get(post.userId) : null;
+
+    return {
+      ...post,
+      user,
+      isLiked: !!isLiked,
     };
   },
 });

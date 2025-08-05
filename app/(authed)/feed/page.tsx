@@ -1,7 +1,15 @@
 "use client";
 
 import AddPostForm from "@/components/forms/add-post-form";
-import PostCard from "@/components/post-card";
+import PostCard, {
+  PostBody,
+  PostCommentButton,
+  PostFooter,
+  PostHeader,
+  PostLikeButton,
+  PostOptions,
+  PostShareButton,
+} from "@/components/post-card";
 import { Button } from "@/components/ui/button";
 import { api } from "@/convex/_generated/api";
 import { useStoreUserEffect } from "@/hooks/useStoreUserEffect";
@@ -31,7 +39,17 @@ export default function Feed() {
         <>
           {isAuthenticated ? <AddPostForm /> : null}
           {posts?.map((post) => (
-            <PostCard key={post._id} post={post} currentUser={user} />
+            <PostCard key={post._id} post={post} currentUser={user}>
+              <PostHeader>
+                <PostOptions />
+              </PostHeader>
+              <PostBody />
+              <PostFooter>
+                <PostLikeButton />
+                <PostCommentButton />
+                <PostShareButton />
+              </PostFooter>
+            </PostCard>
           ))}
           <Button
             hidden={postsStatus !== "CanLoadMore"}
