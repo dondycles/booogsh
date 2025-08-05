@@ -10,7 +10,7 @@ export function useStoreUserEffect() {
   const { user, isLoaded, isSignedIn } = useUser();
   const [isLoadingUserDb, setIsLoadingUserDb] = useState(true);
   const [userDb, setUserDb] = useState<null | Doc<"users">>(null);
-  const storeUser = useMutation(api.users.checkAndGetCurrentUser);
+  const checkAndGetCurrentUser = useMutation(api.users.checkAndGetCurrentUser);
 
   useEffect(() => {
     if (!isSignedIn) {
@@ -23,7 +23,7 @@ export function useStoreUserEffect() {
     async function createUser() {
       try {
         setUserDb(
-          await storeUser({
+          await checkAndGetCurrentUser({
             info: {
               email: user?.primaryEmailAddress?.emailAddress ?? "",
               name: user?.fullName ?? "Anonymous",
@@ -49,7 +49,7 @@ export function useStoreUserEffect() {
     };
   }, [
     isSignedIn,
-    storeUser,
+    checkAndGetCurrentUser,
     user?.id,
     user?.primaryEmailAddress,
     user?.fullName,

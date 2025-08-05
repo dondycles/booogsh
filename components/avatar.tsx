@@ -2,37 +2,75 @@ import { Doc } from "@/convex/_generated/dataModel";
 import { UserCircle2 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import UserDotStatus from "./user-dot-status";
+import { cn } from "@/lib/utils";
 
 export default function Avatar({
   user,
   size = 40,
   disableLink = false,
+  showDotStatus = false,
+  dotStatusClassName,
 }: {
   user: Doc<"users"> | null;
   size?: number;
   disableLink?: boolean;
+  showDotStatus?: boolean;
+  dotStatusClassName?: string;
 }) {
   return user?.pfp ? (
     disableLink ? (
-      <Image
-        src={user.pfp as string}
-        alt={`${user?.username}'s profile picture`}
-        width={size}
-        height={size}
-        quality={50}
-        className="rounded-full size-fit"
-      />
-    ) : (
-      <Link href={`/user/${user.username}`}>
+      <div className="relative">
         <Image
-          src={user?.pfp as string}
+          src={user.pfp as string}
           alt={`${user?.username}'s profile picture`}
           width={size}
           height={size}
           quality={50}
           className="rounded-full size-fit"
         />
-      </Link>
+        {showDotStatus ? (
+          <div
+            className={cn(
+              "absolute bottom-0 right-0 bg-muted rounded-full aspect-square size-4",
+              dotStatusClassName,
+            )}
+          >
+            <UserDotStatus
+              activityStatus={user.activityStatus}
+              lastActivity={user.lastActivity}
+              className={cn("h-full w-full stroke-12", dotStatusClassName)}
+            />
+          </div>
+        ) : null}
+      </div>
+    ) : (
+      <div className="relative">
+        <Link href={`/user/${user.username}`}>
+          <Image
+            src={user?.pfp as string}
+            alt={`${user?.username}'s profile picture`}
+            width={size}
+            height={size}
+            quality={50}
+            className="rounded-full size-fit"
+          />
+        </Link>
+        {showDotStatus ? (
+          <div
+            className={cn(
+              "absolute bottom-0 right-0 bg-muted rounded-full aspect-square size-4",
+              dotStatusClassName,
+            )}
+          >
+            <UserDotStatus
+              activityStatus={user.activityStatus}
+              lastActivity={user.lastActivity}
+              className={cn("h-full w-full stroke-12", dotStatusClassName)}
+            />
+          </div>
+        ) : null}
+      </div>
     )
   ) : (
     <UserCircle2 className="size-10 shrink-0 text-foreground" />

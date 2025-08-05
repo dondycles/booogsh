@@ -4,21 +4,21 @@ import { mutation } from "./_generated/server";
 export const toggleLikePost = mutation({
   args: { postId: v.id("posts") },
   handler: async (ctx, { postId }) => {
-    const user = await ctx.auth.getUserIdentity();
-    if (!user) {
+    const currentUser = await ctx.auth.getUserIdentity();
+    if (!currentUser) {
       throw new ConvexError("You must be signed in to like a post.");
     }
 
-    const userDbData = await ctx.db
+    const currentUserDbData = await ctx.db
       .query("users")
       .withIndex("by_token", (q) =>
-        q.eq("tokenIdentifier", user.tokenIdentifier),
+        q.eq("tokenIdentifier", currentUser.tokenIdentifier),
       )
       .unique();
 
-    if (!userDbData) {
+    if (!currentUserDbData) {
       throw new ConvexError(
-        "No user found with the provided token identifier.",
+        "Current user can not be found with the provided token identifier.",
       );
     }
 
@@ -28,14 +28,14 @@ export const toggleLikePost = mutation({
       throw new ConvexError("Post not found.");
     }
 
-    if (post.privacy === "private" && post.userId !== userDbData._id) {
+    if (post.privacy === "private" && post.userId !== currentUserDbData._id) {
       throw new ConvexError("You are not authorized to like this post.");
     }
 
     const like = await ctx.db
       .query("postLikes")
       .withIndex("byPostAndUser", (q) =>
-        q.eq("postId", postId).eq("userId", userDbData._id),
+        q.eq("postId", postId).eq("userId", currentUserDbData._id),
       )
       .unique();
 
@@ -50,7 +50,7 @@ export const toggleLikePost = mutation({
       });
       await ctx.db.insert("postLikes", {
         postId,
-        userId: userDbData._id,
+        userId: currentUserDbData._id,
       });
     }
   },
@@ -59,20 +59,20 @@ export const toggleLikePost = mutation({
 export const toggleLikeComment = mutation({
   args: { commentId: v.id("postComments") },
   handler: async (ctx, { commentId }) => {
-    const user = await ctx.auth.getUserIdentity();
-    if (!user) {
+    const currentUser = await ctx.auth.getUserIdentity();
+    if (!currentUser) {
       throw new ConvexError("You must be signed in to like a post.");
     }
-    const userDbData = await ctx.db
+    const currentUserDbData = await ctx.db
       .query("users")
       .withIndex("by_token", (q) =>
-        q.eq("tokenIdentifier", user.tokenIdentifier),
+        q.eq("tokenIdentifier", currentUser.tokenIdentifier),
       )
       .unique();
 
-    if (!userDbData) {
+    if (!currentUserDbData) {
       throw new ConvexError(
-        "No user found with the provided token identifier.",
+        "Current user can not be found with the provided token identifier.",
       );
     }
 
@@ -85,7 +85,7 @@ export const toggleLikeComment = mutation({
     const like = await ctx.db
       .query("postCommentLikes")
       .withIndex("byCommentAndUser", (q) =>
-        q.eq("commentId", commentId).eq("userId", userDbData._id),
+        q.eq("commentId", commentId).eq("userId", currentUserDbData._id),
       )
       .unique();
 
@@ -100,7 +100,7 @@ export const toggleLikeComment = mutation({
       });
       await ctx.db.insert("postCommentLikes", {
         commentId,
-        userId: userDbData._id,
+        userId: currentUserDbData._id,
       });
     }
   },

@@ -16,27 +16,27 @@ export const checkAndGetCurrentUser = mutation({
       throw new ConvexError("Called storeUser without authentication present");
     }
 
-    const userDbData = await ctx.db
+    const currentUserDbData = await ctx.db
       .query("users")
       .withIndex("by_token", (q) =>
         q.eq("tokenIdentifier", identity.tokenIdentifier),
       )
       .unique();
 
-    if (userDbData !== null) {
-      if (name !== userDbData.name) {
-        await ctx.db.patch(userDbData._id, { name });
+    if (currentUserDbData !== null) {
+      if (name !== currentUserDbData.name) {
+        await ctx.db.patch(currentUserDbData._id, { name });
       }
-      if (email !== userDbData.email) {
-        await ctx.db.patch(userDbData._id, { email });
+      if (email !== currentUserDbData.email) {
+        await ctx.db.patch(currentUserDbData._id, { email });
       }
-      if (username !== userDbData.username) {
-        await ctx.db.patch(userDbData._id, { username });
+      if (username !== currentUserDbData.username) {
+        await ctx.db.patch(currentUserDbData._id, { username });
       }
-      if (pfp !== userDbData.pfp) {
-        await ctx.db.patch(userDbData._id, { pfp: identity.pictureUrl });
+      if (pfp !== currentUserDbData.pfp) {
+        await ctx.db.patch(currentUserDbData._id, { pfp: identity.pictureUrl });
       }
-      return userDbData;
+      return currentUserDbData;
     }
 
     const newUserId = await ctx.db.insert("users", {
@@ -45,6 +45,8 @@ export const checkAndGetCurrentUser = mutation({
       username,
       tokenIdentifier: identity.tokenIdentifier,
       pfp: identity.pictureUrl,
+      activityStatus: "visible",
+      lastActivity: new Date().toISOString(),
     });
     return await ctx.db
       .query("users")
@@ -62,5 +64,53 @@ export const getUserProfile = query({
       .query("users")
       .withIndex("by_username", (q) => q.eq("username", username))
       .unique();
+  },
+});
+
+export const setUserActivity = mutation({
+  args: {
+    activityStatus: v.union(v.literal("visible"), v.literal("hidden")),
+  },
+  handler: async (ctx, { activityStatus }) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new ConvexError("You must be signed in to set user activity.");
+    }
+    const currentUserDbData = await ctx.db
+      .query("users")
+      .withIndex("by_token", (q) =>
+        q.eq("tokenIdentifier", identity.tokenIdentifier),
+      )
+      .unique();
+
+    if (!currentUserDbData) {
+      throw new ConvexError("Current user can not be found.");
+    }
+
+    await ctx.db.patch(currentUserDbData._id, {
+      activityStatus,
+    });
+  },
+});
+
+export const updateLastActivity = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+
+    const currentUserDbData = identity
+      ? await ctx.db
+          .query("users")
+          .withIndex("by_token", (q) =>
+            q.eq("tokenIdentifier", identity.tokenIdentifier),
+          )
+          .unique()
+      : null;
+
+    if (!currentUserDbData) return;
+
+    await ctx.db.patch(currentUserDbData._id, {
+      lastActivity: new Date().toISOString(),
+    });
   },
 });

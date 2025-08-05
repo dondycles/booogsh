@@ -2,7 +2,7 @@ import { ConvexError, v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { paginationOptsValidator } from "convex/server";
 
-export const getPublicPosts = query({
+export const getGettablePosts = query({
   args: {
     paginationOpts: paginationOptsValidator,
   },
@@ -17,7 +17,7 @@ export const getPublicPosts = query({
           .unique()
       : null;
 
-    if (!currentUser) {
+    if (!currentUserDbData) {
       const results = await ctx.db
         .query("posts")
         .filter((q) => q.eq(q.field("privacy"), "public"))
@@ -41,36 +41,62 @@ export const getPublicPosts = query({
       };
     }
 
+    const currentUserFriends = await ctx.db
+      .query("friends")
+      .filter((q) =>
+        q.and(
+          q.or(
+            q.eq(q.field("friendId"), currentUserDbData._id),
+
+            q.eq(q.field("userId"), currentUserDbData._id),
+          ),
+          q.eq(q.field("status"), "accepted"),
+        ),
+      )
+      .collect();
+
     const results = await ctx.db
       .query("posts")
       .filter((q) =>
         q.or(
-          q.eq(q.field("privacy"), "public"),
-          q.eq(q.field("userId"), currentUserDbData?._id),
+          q.neq(q.field("privacy"), "private"),
+          q.eq(q.field("userId"), currentUserDbData._id),
         ),
       )
       .order("desc")
       .paginate(args.paginationOpts);
 
     const mappedPage = await Promise.all(
-      results.page.map(async (post) => {
-        const user = await ctx.db.get(post.userId);
-        const isLiked = currentUserDbData
-          ? await ctx.db
-              .query("postLikes")
-              .withIndex("byPostAndUser", (q) =>
-                q.eq("postId", post._id).eq("userId", currentUserDbData._id),
-              )
-              .unique()
-          : null;
+      results.page
+        .filter(
+          (post) =>
+            post.privacy === "private" ||
+            post.privacy === "public" ||
+            (post.privacy === "friends" &&
+              currentUserFriends.some(
+                (friend) =>
+                  friend.friendId === post.userId ||
+                  friend.userId === post.userId,
+              )),
+        )
+        .map(async (post) => {
+          const user = await ctx.db.get(post.userId);
+          const isLiked = currentUserDbData
+            ? await ctx.db
+                .query("postLikes")
+                .withIndex("byPostAndUser", (q) =>
+                  q.eq("postId", post._id).eq("userId", currentUserDbData._id),
+                )
+                .unique()
+            : null;
 
-        return {
-          ...post,
-          user,
-          isLiked: !!isLiked,
-          // sharedPost: null,
-        };
-      }),
+          return {
+            ...post,
+            user,
+            isLiked: !!isLiked,
+            // sharedPost: null,
+          };
+        }),
     );
 
     return {
@@ -96,7 +122,7 @@ export const getPublicPostsOfThisUser = query({
           .unique()
       : null;
 
-    if (!currentUser) {
+    if (!currentUserDbData) {
       const results = await ctx.db
         .query("posts")
         .filter((q) => q.eq(q.field("privacy"), "public"))
@@ -126,7 +152,7 @@ export const getPublicPostsOfThisUser = query({
         q.and(
           q.or(
             q.eq(q.field("privacy"), "public"),
-            q.eq(q.field("userId"), currentUserDbData?._id),
+            q.eq(q.field("userId"), currentUserDbData._id),
           ),
           q.eq(q.field("userId"), args.userId),
         ),
@@ -274,27 +300,29 @@ export const add = mutation({
     sharedPostId: v.optional(v.id("posts")),
   },
   handler: async (ctx, args) => {
-    const user = await ctx.auth.getUserIdentity();
+    const currentUser = await ctx.auth.getUserIdentity();
 
-    if (!user) {
+    if (!currentUser) {
       throw new Error("You must be signed to post.");
     }
 
-    const userDbData = await ctx.db
+    const currentUserDbData = await ctx.db
       .query("users")
       .withIndex("by_token", (q) =>
-        q.eq("tokenIdentifier", user.tokenIdentifier),
+        q.eq("tokenIdentifier", currentUser.tokenIdentifier),
       )
       .unique();
 
-    if (!userDbData) {
-      throw new Error("No user found with the provided token identifier.");
+    if (!currentUserDbData) {
+      throw new Error(
+        "Current user can not be found with the provided token identifier.",
+      );
     }
 
     return await ctx.db.insert("posts", {
       message: args.message,
       privacy: args.privacy,
-      userId: userDbData?._id,
+      userId: currentUserDbData?._id,
       sharedPostId: args.sharedPostId,
     });
   },
@@ -303,21 +331,21 @@ export const add = mutation({
 export const remove = mutation({
   args: { postId: v.id("posts") },
   handler: async (ctx, { postId }) => {
-    const user = await ctx.auth.getUserIdentity();
-    if (!user) {
+    const currentUser = await ctx.auth.getUserIdentity();
+    if (!currentUser) {
       throw new ConvexError("You must be signed in to like a post.");
     }
 
-    const userDbData = await ctx.db
+    const currentUserDbData = await ctx.db
       .query("users")
       .withIndex("by_token", (q) =>
-        q.eq("tokenIdentifier", user.tokenIdentifier),
+        q.eq("tokenIdentifier", currentUser.tokenIdentifier),
       )
       .unique();
 
-    if (!userDbData) {
+    if (!currentUserDbData) {
       throw new ConvexError(
-        "No user found with the provided token identifier.",
+        "Current user can not be found with the provided token identifier.",
       );
     }
 
@@ -326,7 +354,7 @@ export const remove = mutation({
       throw new ConvexError("Post not found.");
     }
 
-    if (post.userId !== userDbData._id) {
+    if (post.userId !== currentUserDbData._id) {
       throw new ConvexError("You are not authorized to delete this post.");
     }
 
@@ -371,21 +399,21 @@ export const update = mutation({
     ),
   },
   handler: async (ctx, args) => {
-    const user = await ctx.auth.getUserIdentity();
-    if (!user) {
+    const currentUser = await ctx.auth.getUserIdentity();
+    if (!currentUser) {
       throw new ConvexError("You must be signed in to update a post.");
     }
 
-    const userDbData = await ctx.db
+    const currentUserDbData = await ctx.db
       .query("users")
       .withIndex("by_token", (q) =>
-        q.eq("tokenIdentifier", user.tokenIdentifier),
+        q.eq("tokenIdentifier", currentUser.tokenIdentifier),
       )
       .unique();
 
-    if (!userDbData) {
+    if (!currentUserDbData) {
       throw new ConvexError(
-        "No user found with the provided token identifier.",
+        "Current user can not be found with the provided token identifier.",
       );
     }
 
@@ -394,7 +422,7 @@ export const update = mutation({
       throw new ConvexError("Post not found.");
     }
 
-    if (post.userId !== userDbData._id) {
+    if (post.userId !== currentUserDbData._id) {
       throw new ConvexError("You are not authorized to update this post.");
     }
 

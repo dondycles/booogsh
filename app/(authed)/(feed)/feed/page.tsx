@@ -16,7 +16,7 @@ export default function Feed() {
     loadMore: loadMorePosts,
     results: posts,
     status: postsStatus,
-  } = usePaginatedQuery(api.posts.getPublicPosts, {}, { initialNumItems: 5 });
+  } = usePaginatedQuery(api.posts.getGettablePosts, {}, { initialNumItems: 5 });
 
   const isLoadingAll = isLoading || postsStatus === "LoadingFirstPage";
 

@@ -111,7 +111,7 @@ function Header({ children }: { children?: React.ReactNode }) {
   return (
     <div className="flex place-items-start justify-between text-muted-foreground gap-2 px-2 sm:px-4">
       <div className="flex gap-2 items-start truncate">
-        <Avatar user={post.user} />
+        <Avatar user={post.user} showDotStatus dotStatusClassName="stroke-12" />
         <div className="space-y-1 inline-flex flex-col">
           <Username
             username={post.user?.username}
@@ -210,30 +210,32 @@ function ShareButton() {
       </DialogTrigger>
       <DialogContent
         showCloseButton={false}
-        className=" max-w-xl sm:max-w-xl p-2 sm:p-4 bg-transparent overflow-hidden border-0 shadow-none"
+        className=" max-w-[calc(100%-1rem)] sm:max-w-xl  p-0 sm:p-0 bg-transparent overflow-hidden border shadow-none"
       >
-        <div className="flex flex-col relative backdrop-blur bg-border rounded-md border overflow-auto">
-          <DialogHeader className="px-2 sm:px-4 py-2 sm:py-4">
-            <DialogTitle>Share this post?</DialogTitle>
-          </DialogHeader>
-          <AddPostForm
-            sharedPostId={post._id}
-            className="rounded-none"
-            close={() => setOpen(false)}
-          />
-          <Card
-            post={post}
-            currentUser={currentUser}
-            className="rounded-none mt-2 sm:mt-4"
-          >
-            <Header />
-            <Body />
-            <Footer>
-              <LikeButton />
-              <CommentButton />
-            </Footer>
-          </Card>
-        </div>
+        <ScrollArea className="max-h-[60dvh]">
+          <div className="flex flex-col relative backdrop-blur bg-border">
+            <DialogHeader className="px-2 sm:px-4 py-2 sm:py-4">
+              <DialogTitle>Share this post?</DialogTitle>
+            </DialogHeader>
+            <AddPostForm
+              sharedPostId={post._id}
+              className="rounded-none"
+              close={() => setOpen(false)}
+            />
+            <Card
+              post={post}
+              currentUser={currentUser}
+              className="rounded-none mt-px"
+            >
+              <Header />
+              <Body />
+              <Footer>
+                <LikeButton />
+                <CommentButton />
+              </Footer>
+            </Card>
+          </div>
+        </ScrollArea>
       </DialogContent>
     </Dialog>
   );
@@ -556,7 +558,12 @@ function CommentCard({
         className,
       )}
     >
-      <Avatar user={comment.user} size={32} />
+      <Avatar
+        user={comment.user}
+        size={32}
+        showDotStatus
+        dotStatusClassName="stroke-10 size-2"
+      />
       <div className="text-sm flex-1 space-y-1">
         <Username
           username={comment.user?.username}

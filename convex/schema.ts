@@ -11,6 +11,10 @@ export default defineSchema({
     username: v.string(),
     tokenIdentifier: v.string(),
     pfp: v.optional(v.string()),
+    activityStatus: v.optional(
+      v.union(v.literal("visible"), v.literal("hidden")),
+    ),
+    lastActivity: v.optional(v.string()),
   })
     .index("by_token", ["tokenIdentifier"])
     .index("by_username", ["username"]),

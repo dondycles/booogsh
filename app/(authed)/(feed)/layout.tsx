@@ -1,14 +1,9 @@
 import CustomUserButton from "@/components/custom-user-button";
 import IsMobile from "@/components/is-mobile";
+import OnlineFriends from "@/components/online-friends";
 import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { SignedIn } from "@clerk/nextjs";
-import { Dot, Ellipsis, MessageCircle, Users2 } from "lucide-react";
+import { MessageCircle, Users2 } from "lucide-react";
 import Link from "next/link";
 
 export default function FeedLayout({
@@ -55,27 +50,7 @@ export default function FeedLayout({
       {children}
       <IsMobile MOBILE_BREAKPOINT={1024}>
         <SignedIn>
-          <div className="fixed bottom-0 right-0 h-[calc(100vh-60px)] w-[calc((100vw-590px)/2)] flex flex-col p-2 sm:p-4 ">
-            <div className="border-b pb-2 inline-flex items-center justify-between gap-2">
-              <div className="font-semibold text-muted-foreground inline-flex truncate">
-                <span>
-                  <Dot className="text-green-600 stroke-6" />
-                </span>
-                <span>Online Friends</span>
-              </div>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <button className="text-muted-foreground">
-                    <Ellipsis className="size-4" />
-                  </button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem>Set Active Status</DropdownMenuItem>
-                  <DropdownMenuItem>Hide Online Friends</DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
-          </div>
+          <OnlineFriends />
         </SignedIn>
       </IsMobile>
     </div>
