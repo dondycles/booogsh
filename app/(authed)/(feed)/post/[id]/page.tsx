@@ -8,7 +8,7 @@ export default async function PostDeepView({
 }) {
   const { id } = await params;
   return (
-    <main className="p-2 sm:p-4 flex flex-col gap-2 sm:gap-4 max-w-xl w-full mx-auto lg:col-start-2">
+    <main className="p-2 sm:p-4 flex flex-col gap-2 sm:gap-4 max-w-xl w-full mx-auto col-start-2  mb-24">
       <PostDeepViewClient postId={id} />
     </main>
   );

@@ -13,25 +13,7 @@ export default function AuthedLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex flex-col relative">
-      {/* <header className="bg-muted w-full sticky top-0 h-[60px] z-1 border-b">
-        <div className="flex items-center justify-between gap-4 max-w-xl mx-auto p-4 h-full">
-          <Link href="/feed">
-            <span className="font-semibold text-sm">booog.sh</span>
-          </Link>
-          <SignedIn>
-            <CustomUserButton
-              className="h-9 p-0 rounded-full"
-              showName={false}
-            />
-          </SignedIn>
-          <SignedOut>
-            <Button asChild>
-              <SignInButton />
-            </Button>
-          </SignedOut>
-        </div>
-      </header> */}
+    <div className="flex flex-col relative ">
       <div className="grid grid-cols-[1fr_minmax(0px,576px)_1fr] text-foreground relative z-0">
         <IsMobile MOBILE_BREAKPOINT={1024}>
           <SignedIn>
@@ -88,6 +70,26 @@ export default function AuthedLayout({
           </SignedIn>
         </IsMobile>
       </div>
+      <IsMobile MOBILE_BREAKPOINT={1024} reverse>
+        <nav className="bg-muted w-full fixed bottom-0 h-[60px] z-1 border-t">
+          <div className="flex items-center justify-between gap-4 max-w-xl mx-auto p-4 h-full">
+            <Link href="/feed">
+              <span className="font-semibold text-sm">booog.sh</span>
+            </Link>
+            <SignedIn>
+              <CustomUserButton
+                className="h-9 p-0 rounded-full"
+                showName={false}
+              />
+            </SignedIn>
+            <SignedOut>
+              <Button asChild>
+                <SignInButton />
+              </Button>
+            </SignedOut>
+          </div>
+        </nav>
+      </IsMobile>
       <LastActivitySetter />
     </div>
   );
