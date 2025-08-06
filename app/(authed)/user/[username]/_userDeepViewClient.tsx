@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import Username from "@/components/username";
 import { api } from "@/convex/_generated/api";
 import { useStoreUserEffect } from "@/hooks/useStoreUserEffect";
-import UserPostsClient from "./userPosts";
+import UserPostsClient from "./_userPosts";
 
 export default function UserDeepViewClient({ username }: { username: string }) {
 	const { user: currentUser } = useStoreUserEffect();

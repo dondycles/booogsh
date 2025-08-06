@@ -144,7 +144,7 @@ function Body() {
 	const { post } = usePostContext();
 	return (
 		<>
-			<Link href={`/post/${post._id}`}>
+			<Link href={`/feed/${post._id}`}>
 				<h1 className="whitespace-pre-wrap text-sm sm:text-base text-foreground px-2 sm:px-4 hover:bg-accent">
 					{post.message}
 				</h1>
@@ -164,7 +164,7 @@ function SharedPost({ sharedPostId }: { sharedPostId: Id<"posts"> }) {
 	return sharedPost ? (
 		<div className="px-2 sm:px-4">
 			{!sharedPost._id ? (
-				<Link href={`/post/${post.sharedPostId}`}>
+				<Link href={`/feed/${post.sharedPostId}`}>
 					<h1 className="whitespace-pre-wrap text-sm text-muted-foreground bg-accent p-2 sm:p-4 rounded-md italic">
 						Post is private or does not exist.
 					</h1>

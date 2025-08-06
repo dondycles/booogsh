@@ -24,7 +24,7 @@ export default function Avatar({
 }) {
 	return user?.pfp ? (
 		disableLink ? (
-			<div className="relative">
+			<div className="relative  shrink-0">
 				<Image
 					src={user.pfp as string}
 					alt={`${user?.username}'s profile picture`}
@@ -65,7 +65,7 @@ export default function Avatar({
 				) : null}
 			</div>
 		) : (
-			<div className="relative">
+			<div className="relative shrink-0">
 				<Link href={`/user/${user.username}`}>
 					<Image
 						src={user?.pfp as string}

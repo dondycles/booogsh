@@ -1,5 +1,5 @@
 import type { Id } from "@/convex/_generated/dataModel";
-import PostDeepViewClient from "./postDeepViewClient";
+import PostDeepViewClient from "./_postDeepViewClient";
 
 export default async function PostDeepView({
 	params,

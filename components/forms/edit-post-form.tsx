@@ -117,7 +117,10 @@ export default function EditPostForm({
 							</FormItem>
 						)}
 					/>
-					<Button disabled={form.formState.isSubmitting} type="submit">
+					<Button
+						disabled={!form.formState.isValid || form.formState.isSubmitting}
+						type="submit"
+					>
 						<Send />
 						Edit Post
 					</Button>

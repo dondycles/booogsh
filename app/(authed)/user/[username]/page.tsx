@@ -1,4 +1,4 @@
-import UserDeepViewClient from "./userDeepViewClient";
+import UserDeepViewClient from "./_userDeepViewClient";
 export default async function UserDeepView({
 	params,
 }: {

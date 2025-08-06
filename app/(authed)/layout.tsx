@@ -52,11 +52,11 @@ export default function AuthedLayout({
 									asChild
 									className="flex flex-row justify-baseline gap-2 h-fit text-foreground/75"
 								>
-									<Link href="/feed">
+									<Link href="/chat">
 										<span>
 											<MessageCircle className="size-8 shrink-0 " />
 										</span>
-										Chats
+										Chat
 									</Link>
 								</Button>
 							</div>
