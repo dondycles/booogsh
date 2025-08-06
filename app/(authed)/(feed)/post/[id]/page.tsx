@@ -1,15 +1,15 @@
+import type { Id } from "@/convex/_generated/dataModel";
 import PostDeepViewClient from "./postDeepViewClient";
-import { Id } from "@/convex/_generated/dataModel";
 
 export default async function PostDeepView({
-  params,
+	params,
 }: {
-  params: Promise<{ id: Id<"posts"> }>;
+	params: Promise<{ id: Id<"posts"> }>;
 }) {
-  const { id } = await params;
-  return (
-    <main className="p-2 sm:p-4 flex flex-col gap-2 sm:gap-4 max-w-xl w-full mx-auto col-start-2  mb-24">
-      <PostDeepViewClient postId={id} />
-    </main>
-  );
+	const { id } = await params;
+	return (
+		<main className="px-2 sm:px-4 pt-2 sm:pt-4 pb-24 flex flex-col gap-2 sm:gap-4 max-w-xl w-full mx-auto col-start-2 ">
+			<PostDeepViewClient postId={id} />
+		</main>
+	);
 }

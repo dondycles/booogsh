@@ -1,9 +1,9 @@
 import UserDeepViewClient from "./userDeepViewClient";
 export default async function UserDeepView({
-  params,
+	params,
 }: {
-  params: Promise<{ username: string }>;
+	params: Promise<{ username: string }>;
 }) {
-  const { username } = await params;
-  return <UserDeepViewClient username={username} />;
+	const { username } = await params;
+	return <UserDeepViewClient username={username} />;
 }

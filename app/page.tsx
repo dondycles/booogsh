@@ -1,47 +1,47 @@
-import { Button } from "@/components/ui/button";
 import { SignedIn, SignedOut, SignInButton, UserButton } from "@clerk/nextjs";
 import Link from "next/link";
+import { Button } from "@/components/ui/button";
 
 export default function Home() {
-  return (
-    <main className="p-4 h-dvh w-full flex">
-      <div className="space-y-4 text-center m-auto">
-        <h1 className="text-6xl font-bold">booog.sh</h1>
-        <p className="text-lg">
-          Your platform to share and discover contents that go booogsh!
-        </p>
-        <SignedOut>
-          <Button asChild>
-            <SignInButton />
-          </Button>
-        </SignedOut>
-        <SignedIn>
-          <div className="flex gap-4 justify-center items-center">
-            <Button asChild>
-              <Link href="/feed">Go to feed</Link>
-            </Button>
-            <UserButton
-              showName
-              appearance={{
-                elements: {
-                  userButtonOuterIdentifier: {
-                    color: "var(--muted-foreground)",
-                    padding: 0,
-                  },
-                  userButtonTrigger: {
-                    backgroundColor: "var(--muted)",
-                    color: "var(--muted-foreground)",
-                    padding: "4px 16px",
-                    borderRadius: "var(--radius)",
-                  },
-                },
-              }}
-            />
-          </div>
-        </SignedIn>
-      </div>
-    </main>
-  );
+	return (
+		<main className="p-4 h-dvh w-full flex">
+			<div className="space-y-4 text-center m-auto">
+				<h1 className="text-6xl font-bold">booog.sh</h1>
+				<p className="text-lg">
+					Your platform to share and discover contents that go booogsh!
+				</p>
+				<SignedOut>
+					<Button asChild>
+						<SignInButton />
+					</Button>
+				</SignedOut>
+				<SignedIn>
+					<div className="flex gap-4 justify-center items-center">
+						<Button asChild>
+							<Link href="/feed">Go to feed</Link>
+						</Button>
+						<UserButton
+							showName
+							appearance={{
+								elements: {
+									userButtonOuterIdentifier: {
+										color: "var(--muted-foreground)",
+										padding: 0,
+									},
+									userButtonTrigger: {
+										backgroundColor: "var(--muted)",
+										color: "var(--muted-foreground)",
+										padding: "4px 16px",
+										borderRadius: "var(--radius)",
+									},
+								},
+							}}
+						/>
+					</div>
+				</SignedIn>
+			</div>
+		</main>
+	);
 }
 
 // function Content() {

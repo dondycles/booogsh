@@ -1,53 +1,53 @@
-import { api } from "@/convex/_generated/api";
-import { Id } from "@/convex/_generated/dataModel";
 import { usePaginatedQuery } from "convex/react";
+import { Loader2 } from "lucide-react";
 import * as Post from "@/components/post-card";
 import { Button } from "@/components/ui/button";
+import { api } from "@/convex/_generated/api";
+import type { Id } from "@/convex/_generated/dataModel";
 import { useStoreUserEffect } from "@/hooks/useStoreUserEffect";
-import { Loader2 } from "lucide-react";
 export default function UserPostsClient({ userId }: { userId: Id<"users"> }) {
-  const { user, isLoading } = useStoreUserEffect();
-  const {
-    isLoading: isLoadingMorePosts,
-    loadMore: loadMorePosts,
-    results: posts,
-    status: postsStatus,
-  } = usePaginatedQuery(
-    api.posts.getPublicPostsOfThisUser,
-    { userId },
-    { initialNumItems: 5 },
-  );
-  const isLoadingAll = isLoading || postsStatus === "LoadingFirstPage";
+	const { user, isLoading } = useStoreUserEffect();
+	const {
+		isLoading: isLoadingMorePosts,
+		loadMore: loadMorePosts,
+		results: posts,
+		status: postsStatus,
+	} = usePaginatedQuery(
+		api.posts.getPublicPostsOfThisUser,
+		{ userId },
+		{ initialNumItems: 5 },
+	);
+	const isLoadingAll = isLoading || postsStatus === "LoadingFirstPage";
 
-  return isLoadingAll ? (
-    <div className="text-muted-foreground inline-flex space-x-2 items-center justify-center py-8 text-sm">
-      <Loader2 className="animate-spin" />
-      <span>Getting everything ready...</span>
-    </div>
-  ) : (
-    <div className="flex flex-col gap-2 sm:gap-4 max-w-xl mx-auto w-full">
-      {posts?.map((post) => (
-        <Post.Card key={post._id} post={post} currentUser={user}>
-          <Post.Header>
-            <Post.PostOptions />
-          </Post.Header>
-          <Post.Body />
-          <Post.Footer>
-            <Post.LikeButton />
-            <Post.CommentButton />
-            <Post.ShareButton />
-          </Post.Footer>
-        </Post.Card>
-      ))}
-      <Button
-        hidden={postsStatus !== "CanLoadMore"}
-        onClick={() => loadMorePosts(5)}
-        disabled={postsStatus !== "CanLoadMore" || isLoadingMorePosts}
-        className="text-muted-foreground"
-        variant="secondary"
-      >
-        Load more posts?
-      </Button>
-    </div>
-  );
+	return isLoadingAll ? (
+		<div className="text-muted-foreground inline-flex space-x-2 items-center justify-center py-8 text-sm">
+			<Loader2 className="animate-spin" />
+			<span>Getting everything ready...</span>
+		</div>
+	) : (
+		<div className="flex flex-col gap-2 sm:gap-4 max-w-xl mx-auto w-full">
+			{posts?.map((post) => (
+				<Post.Card key={post._id} post={post} currentUser={user}>
+					<Post.Header>
+						<Post.PostOptions />
+					</Post.Header>
+					<Post.Body />
+					<Post.Footer>
+						<Post.LikeButton />
+						<Post.CommentButton />
+						<Post.ShareButton />
+					</Post.Footer>
+				</Post.Card>
+			))}
+			<Button
+				hidden={postsStatus !== "CanLoadMore"}
+				onClick={() => loadMorePosts(5)}
+				disabled={postsStatus !== "CanLoadMore" || isLoadingMorePosts}
+				className="text-muted-foreground"
+				variant="secondary"
+			>
+				Load more posts?
+			</Button>
+		</div>
+	);
 }
