@@ -1,7 +1,7 @@
 import { paginationOptsValidator } from "convex/server";
 import { ConvexError, v } from "convex/values";
+import { compact } from "lodash";
 import { mutation, query } from "./_generated/server";
-
 export const getChatRooms = query({
 	args: {},
 	handler: async (ctx) => {
@@ -21,14 +21,26 @@ export const getChatRooms = query({
 			throw new ConvexError("Current user data not found.");
 		}
 
-		const chatRooms = await ctx.db.query("chatRoom").collect();
+		const currentUserChatRooms = await ctx.db
+			.query("userChatRooms")
+			.withIndex("byUser", (q) => q.eq("userId", curretUserDbData._id))
+			.unique();
 
-		const currentUserChatRooms = chatRooms.filter((room) =>
-			room.parties.some((party) => party === curretUserDbData._id),
+		const currentUserChatRoomsData = compact(
+			await Promise.all(
+				(currentUserChatRooms?.chatRoomIds || []).map(async (room) => {
+					const roomData = await ctx.db.get(room);
+
+					if (roomData && !roomData.parties.includes(curretUserDbData._id))
+						throw new ConvexError("You are not a member of this chat room.");
+
+					return roomData;
+				}),
+			),
 		);
 
-		return Promise.all(
-			currentUserChatRooms.map(async (room) => {
+		return await Promise.all(
+			currentUserChatRoomsData.map(async (room) => {
 				const otherPartyIds = room.parties.filter(
 					(user) => user !== curretUserDbData._id,
 				);
@@ -41,9 +53,18 @@ export const getChatRooms = query({
 								.first(),
 					),
 				);
+
+				const latestMessage = await ctx.db
+					.query("chatMessages")
+					.filter((q) => q.eq(q.field("roomId"), room._id))
+					.order("desc")
+					.first();
+
 				return {
 					...room,
 					partiesData,
+					latestMessage,
+					curretUserDbData,
 				};
 			}),
 		);
@@ -93,10 +114,17 @@ export const getChatRoomById = query({
 			),
 		);
 
+		const latestMessage = await ctx.db
+			.query("chatMessages")
+			.filter((q) => q.eq(q.field("roomId"), chatRoomId))
+			.order("desc")
+			.first();
+
 		return {
 			...chatRoomData,
 			partiesData,
 			curretUserDbData,
+			latestMessage,
 		};
 	},
 });
@@ -122,20 +150,54 @@ export const createChatRoom = mutation({
 			throw new ConvexError("Current user data not found.");
 		}
 
-		const existingRoom = await ctx.db.query("chatRoom").collect();
-		if (
-			existingRoom.some(
-				(room) =>
-					room.parties.length === userIds.length + 1 &&
-					room.parties.includes(curretUserDbData._id) &&
-					userIds.every((id) => room.parties.includes(id)),
-			)
-		)
-			return;
+		const currentUserChatRooms = await ctx.db
+			.query("userChatRooms")
+			.withIndex("byUser", (q) => q.eq("userId", curretUserDbData._id))
+			.unique();
 
-		await ctx.db.insert("chatRoom", {
+		for (const chatRoom of currentUserChatRooms?.chatRoomIds || []) {
+			const chatRoomData = await ctx.db.get(chatRoom);
+			if (chatRoomData) {
+				if (
+					chatRoomData.parties.length === userIds.length + 1 &&
+					chatRoomData.parties.includes(curretUserDbData._id) &&
+					userIds.every((id) => chatRoomData.parties.includes(id))
+				)
+					// If the chat room already exists with the same parties, don't create a new one
+					return;
+			}
+		}
+
+		const chatRoomId = await ctx.db.insert("chatRoom", {
 			parties: [curretUserDbData._id, ...userIds],
 		});
+
+		if (currentUserChatRooms)
+			await ctx.db.patch(currentUserChatRooms._id, {
+				chatRoomIds: [...(currentUserChatRooms.chatRoomIds ?? []), chatRoomId],
+			});
+		else
+			await ctx.db.insert("userChatRooms", {
+				userId: curretUserDbData._id,
+				chatRoomIds: [chatRoomId],
+			});
+		for (const targetUserId of userIds) {
+			const targetUserChatRooms = await ctx.db
+				.query("userChatRooms")
+				.withIndex("byUser", (q) => q.eq("userId", targetUserId))
+				.unique();
+
+			if (targetUserChatRooms) {
+				await ctx.db.patch(targetUserChatRooms._id, {
+					chatRoomIds: [...(targetUserChatRooms.chatRoomIds ?? []), chatRoomId],
+				});
+			} else {
+				await ctx.db.insert("userChatRooms", {
+					userId: targetUserId,
+					chatRoomIds: [chatRoomId],
+				});
+			}
+		}
 	},
 });
 

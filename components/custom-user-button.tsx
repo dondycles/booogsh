@@ -55,7 +55,7 @@ export default function CustomUserButton({
 			>
 				{showName ? <Skeleton className="w-20 h-4" /> : null}
 				<span>
-					<UserCircle2 className="size-8 shrink-0  animate-pulse" />
+					<UserCircle2 className="size-9 shrink-0  animate-pulse" />
 				</span>
 			</Button>
 		);

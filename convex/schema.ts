@@ -81,4 +81,8 @@ export default defineSchema({
 	})
 		.index("byRoomAndUser", ["roomId", "userId"])
 		.index("byUserAndRoom", ["userId", "roomId"]),
+	userChatRooms: defineTable({
+		userId: v.id("users"),
+		chatRoomIds: v.optional(v.array(v.id("chatRoom"))),
+	}).index("byUser", ["userId"]),
 });

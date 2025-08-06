@@ -109,6 +109,6 @@ export default function Avatar({
 			</div>
 		)
 	) : (
-		<UserCircle2 className="size-10 shrink-0 text-foreground" />
+		<UserCircle2 className="size-9 shrink-0 text-muted-foreground" />
 	);
 }

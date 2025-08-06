@@ -8,7 +8,7 @@ import {
 import { useEffect, useState } from "react";
 
 export const useGetTimeDifference = (
-	date: Date | string | null | undefined,
+	date: Date | string | number | null | undefined,
 ) => {
 	const [timeDifferenceString, setTimeDifferenceString] = useState<
 		string | null
@@ -36,14 +36,14 @@ export const useGetTimeDifference = (
 
 			const finalDiff =
 				diffInSeconds < 60
-					? `${diffInSeconds} seconds ago`
+					? `${diffInSeconds} secs ago`
 					: diffInMinutes < 60
-						? `${diffInMinutes} minutes ago`
+						? `${diffInMinutes} mins ago`
 						: diffInHours < 24
-							? `${diffInHours} hours ago`
+							? `${diffInHours} hrs ago`
 							: diffInDays < 30
 								? `${diffInDays} days ago`
-								: `${diffInMonths} months ago`;
+								: `${diffInMonths} mnts ago`;
 
 			setTimeDifferenceString(finalDiff);
 			setTimeDifferenceValue(diffInSeconds);

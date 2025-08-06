@@ -21,7 +21,7 @@ export default function Feed() {
 	const isLoadingAll = isLoading || postsStatus === "LoadingFirstPage";
 
 	return (
-		<main className="px-2 sm:px-4 pt-2 sm:pt-4 pb-24 flex flex-col gap-2 sm:gap-4 max-w-xl w-full mx-auto col-start-2">
+		<main data-slot="unaffected-by-mobile-nav">
 			{isLoadingAll ? (
 				<div className="text-muted-foreground inline-flex space-x-2 items-center justify-center py-8 text-sm">
 					<Loader2 className="animate-spin" />

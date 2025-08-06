@@ -13,8 +13,8 @@ export default function AuthedLayout({
 	children: React.ReactNode;
 }) {
 	return (
-		<div className="flex flex-col relative ">
-			<div className="grid grid-cols-[1fr_minmax(0px,576px)_1fr] text-foreground relative z-0">
+		<div className="flex flex-col relative">
+			<div className="grid grid-cols-[1fr_minmax(0px,576px)_1fr] text-foreground relative z-0 [&>main]:data-[slot='unaffected-by-mobile-nav']:pb-19 [&>main]:data-[slot='affected-by-mobile-nav']:lg:h-dvh [&>main]:data-[slot='affected-by-mobile-nav']:h-[calc(100dvh-60px)] [&>main]:px-2 [&>main]:sm:px-4 [&>main]:pt-2 [&>main]:sm:pt-4 [&>main]:flex [&>main]:flex-col [&>main]:gap-2 [&>main]:sm:gap-4 [&>main]:max-w-xl [&>main]:w-full [&>main]:mx-auto [&>main]:col-start-2 ">
 				<IsMobile MOBILE_BREAKPOINT={1024}>
 					<SignedIn>
 						<div className="fixed bottom-0 left-0 h-dvh w-[calc((100vw-590px)/2)] flex items-start justify-end">
@@ -72,13 +72,25 @@ export default function AuthedLayout({
 			</div>
 			<IsMobile MOBILE_BREAKPOINT={1024} reverse>
 				<nav className="bg-muted w-full fixed bottom-0 h-[60px] z-1 border-t">
-					<div className="flex items-center justify-between gap-4 max-w-xl mx-auto p-4 h-full">
-						<Link href="/feed">
-							<span className="font-semibold text-sm">booog.sh</span>
-						</Link>
+					<div className="flex items-center justify-center gap-4 max-w-xl mx-auto px-2 sm:px-4 h-full [&>a]:flex [&>a]:items-center [&>a]:justify-center [&>a]:size-9 [&>a]:rounded-full text-foreground/75">
+						<Button variant="ghost" asChild size="icon">
+							<Link href="/feed">
+								<Newspaper className="shrink-0 size-5" />
+							</Link>
+						</Button>
+						<Button variant="ghost" asChild size="icon">
+							<Link href="/feed">
+								<Users2 className="shrink-0 size-5" />
+							</Link>
+						</Button>
+						<Button variant="ghost" asChild size="icon">
+							<Link href="/chat">
+								<MessageCircle className="shrink-0 size-5" />
+							</Link>
+						</Button>
 						<SignedIn>
 							<CustomUserButton
-								className="h-9 p-0 rounded-full"
+								className="size-9 p-0 rounded-full"
 								showName={false}
 							/>
 						</SignedIn>
