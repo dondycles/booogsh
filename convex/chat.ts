@@ -60,11 +60,22 @@ export const getChatRooms = query({
 					.order("desc")
 					.first();
 
+				const isLatestMessageSeenByCurrentUser = await ctx.db
+					.query("lastMessageSeen")
+					.withIndex("byRoomAndUserAndMessage", (q) =>
+						q
+							.eq("roomId", room._id)
+							.eq("userId", curretUserDbData._id)
+							.eq("messageId", latestMessage?._id),
+					)
+					.first();
+
 				return {
 					...room,
 					partiesData,
 					latestMessage,
 					curretUserDbData,
+					isLatestMessageSeenByCurrentUser: !!isLatestMessageSeenByCurrentUser,
 				};
 			}),
 		);
