@@ -63,9 +63,9 @@ export default function Chats({
 
 	// biome-ignore lint/correctness/useExhaustiveDependencies: <basta>
 	useEffect(() => {
-		if (isAtBottom && bottomRef.current && !document.hidden) {
-			bottomRef.current.scrollIntoView({ behavior: "smooth" });
-			if (chats.length > 0) {
+		if (isAtBottom && bottomRef.current) {
+			bottomRef.current.scrollIntoView({ behavior: "instant" });
+			if (chats.length > 0 && !document.hidden) {
 				handleSeenChat({
 					chatRoomId: chatRoomData._id,
 					messageId: chats[0]._id,
@@ -134,7 +134,13 @@ export default function Chats({
 
 						<div className="bg-muted max-w-md rounded-md p-2 sm:p-4 border">
 							<span className="whitespace-pre-wrap">{chat.content}</span>
-							<div className="flex gap-1 flex-wrap mt-2">
+							<div
+								className={`flex gap-1 flex-wrap mt-2 ${
+									chat.userId === chatRoomData.curretUserDbData._id
+										? "justify-end"
+										: "justify-start"
+								}`}
+							>
 								{lastSeens?.some((lp) => lp.messageId === chat._id) &&
 									lastSeens
 										.filter((lp) => lp.messageId === chat._id)
