@@ -8,7 +8,7 @@ export default function Chat() {
 	const chatRooms = useQuery(api.chat.getChatRooms);
 	return (
 		<main data-slot="unaffected-by-mobile-nav">
-			<div className="bg-muted h-12 flex items-center rounded-md px-2 sm:px-4">
+			<div className="bg-muted h-12 flex items-center rounded-b-md px-2 sm:px-4 -mt-2 sm:-mt-4">
 				<h1 className="text-2xl font-bold">Chats</h1>
 			</div>
 			{chatRooms?.map((chatRoom) => (

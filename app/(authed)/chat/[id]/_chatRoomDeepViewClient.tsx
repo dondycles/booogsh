@@ -13,13 +13,13 @@ export default function ChatRoomDeepViewClient({ id }: { id: Id<"chatRoom"> }) {
 	return (
 		<main data-slot="affected-by-mobile-nav">
 			{chatRoomData._id ? (
-				<div className="h-full flex flex-col">
-					<div className="flex items-center gap-2 bg-muted rounded-md p-2 sm:p-4">
+				<div className="h-full flex flex-col gap-1">
+					<div className="flex items-center gap-2 bg-muted rounded-b-md p-2 sm:p-4 -mt-2 sm:-mt-4">
 						<Avatar user={chatRoomData.partiesData[0]} size={32} />
 						<Username username={chatRoomData.partiesData[0]?.username} />
 					</div>
 					<Chats chatRoomData={chatRoomData} />
-					<div className="sticky bottom-0 -mx-2 sm:-mx-4 p-2 sm:p-4 bg-muted">
+					<div className="sticky bottom-0 p-2 sm:p-4 bg-muted rounded-t-md">
 						<SendChatForm chatRoomId={chatRoomData._id} />
 					</div>
 				</div>

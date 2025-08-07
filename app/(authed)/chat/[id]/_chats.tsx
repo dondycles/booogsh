@@ -118,7 +118,7 @@ export default function Chats({
 							}
 							size={24}
 						/>
-						<span className="whitespace-pre-wrap bg-muted rounded-md p-2 sm:p-4">
+						<span className="whitespace-pre-wrap bg-muted max-w-md rounded-md p-2 sm:p-4 border">
 							{chat.content}
 						</span>
 					</div>
