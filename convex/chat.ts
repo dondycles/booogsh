@@ -276,3 +276,104 @@ export const getChats = query({
 			.paginate(paginationOpts);
 	},
 });
+
+export const seenChat = mutation({
+	args: { chatRoomId: v.id("chatRoom"), messageId: v.id("chatMessages") },
+	handler: async (ctx, { chatRoomId, messageId }) => {
+		const currentUser = await ctx.auth.getUserIdentity();
+		if (!currentUser) {
+			throw new ConvexError("You must be logged in to mark messages as seen.");
+		}
+
+		const currentUserDbData = await ctx.db
+			.query("users")
+			.withIndex("by_token", (q) =>
+				q.eq("tokenIdentifier", currentUser.tokenIdentifier),
+			)
+			.first();
+
+		if (!currentUserDbData) {
+			throw new ConvexError("Current user data not found.");
+		}
+
+		const chatRoomData = await ctx.db.get(chatRoomId);
+
+		if (!chatRoomData) {
+			throw new ConvexError("Chat room not found.");
+		}
+
+		if (!chatRoomData.parties.includes(currentUserDbData._id)) {
+			throw new ConvexError("You are not a member of this chat room.");
+		}
+
+		const message = await ctx.db.get(messageId);
+		if (!message || message.roomId !== chatRoomId) {
+			throw new ConvexError("Message not found in this chat room.");
+		}
+
+		const existingSeen = await ctx.db
+			.query("lastMessageSeen")
+			.withIndex("byRoomAndUserAndMessage", (q) =>
+				q.eq("roomId", chatRoomId).eq("userId", currentUserDbData._id),
+			)
+			.first();
+
+		if (existingSeen) {
+			await ctx.db.patch(existingSeen._id, {
+				messageId,
+			});
+			return;
+		}
+
+		await ctx.db.insert("lastMessageSeen", {
+			roomId: chatRoomId,
+			userId: currentUserDbData._id,
+			messageId,
+		});
+	},
+});
+
+export const getLastMessageSeen = query({
+	args: { chatRoomId: v.id("chatRoom"), partiesIds: v.array(v.id("users")) },
+	handler: async (ctx, { chatRoomId, partiesIds }) => {
+		const currentUser = await ctx.auth.getUserIdentity();
+		if (!currentUser) {
+			throw new ConvexError("You must be logged in to access chat messages.");
+		}
+
+		const currentUserDbData = await ctx.db
+			.query("users")
+			.withIndex("by_token", (q) =>
+				q.eq("tokenIdentifier", currentUser.tokenIdentifier),
+			)
+			.first();
+
+		if (!currentUserDbData) {
+			throw new ConvexError("Current user data not found.");
+		}
+
+		const chatRoomData = await ctx.db.get(chatRoomId);
+
+		if (!chatRoomData) {
+			throw new ConvexError("Chat room not found.");
+		}
+
+		if (!chatRoomData.parties.includes(currentUserDbData._id)) {
+			throw new ConvexError("You are not a member of this chat room.");
+		}
+
+		return compact(
+			await Promise.all(
+				partiesIds.map(async (partyId) => {
+					const lastSeen = await ctx.db
+						.query("lastMessageSeen")
+						.withIndex("byRoomAndUserAndMessage", (q) =>
+							q.eq("roomId", chatRoomId).eq("userId", partyId),
+						)
+						.first();
+					return lastSeen;
+				}),
+			),
+		);
+	},
+});

@@ -109,6 +109,10 @@ export default function Avatar({
 			</div>
 		)
 	) : (
-		<UserCircle2 className="size-9 shrink-0 text-muted-foreground" />
+		<div style={{ width: size, height: size }}>
+			<UserCircle2
+				className={cn("size-full aspect-square shrink-0 text-muted-foreground")}
+			/>
+		</div>
 	);
 }

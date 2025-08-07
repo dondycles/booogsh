@@ -64,6 +64,7 @@ export default defineSchema({
 		.index("byFriendAndUser", ["friendId", "userId"]),
 	chatRoom: defineTable({
 		parties: v.array(v.id("users")),
+		lastUpdate: v.optional(v.string()),
 	}).index("byParty", ["parties"]),
 	chatMessages: defineTable({
 		content: v.string(),
@@ -85,4 +86,9 @@ export default defineSchema({
 		userId: v.id("users"),
 		chatRoomIds: v.optional(v.array(v.id("chatRoom"))),
 	}).index("byUser", ["userId"]),
+	lastMessageSeen: defineTable({
+		roomId: v.id("chatRoom"),
+		userId: v.id("users"),
+		messageId: v.optional(v.id("chatMessages")),
+	}).index("byRoomAndUserAndMessage", ["roomId", "userId", "messageId"]),
 });

@@ -1,4 +1,5 @@
-import { usePaginatedQuery } from "convex/react";
+import { useMutation, usePaginatedQuery, useQuery } from "convex/react";
+import { compact } from "lodash";
 import { useEffect, useRef, useState } from "react";
 import Avatar from "@/components/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -25,6 +26,12 @@ export default function Chats({
 		{ chatRoomId: chatRoomData._id },
 		{ initialNumItems: 20 },
 	);
+
+	const handleSeenChat = useMutation(api.chat.seenChat);
+	const lastSeens = useQuery(api.chat.getLastMessageSeen, {
+		chatRoomId: chatRoomData._id,
+		partiesIds: compact(chatRoomData.partiesData.map((p) => p?._id)),
+	});
 
 	const bottomRef = useRef<HTMLDivElement | null>(null);
 	const loadMoreRef = useRef<HTMLDivElement | null>(null);
@@ -56,10 +63,16 @@ export default function Chats({
 
 	// biome-ignore lint/correctness/useExhaustiveDependencies: <basta>
 	useEffect(() => {
-		if (isAtBottom && bottomRef.current) {
+		if (isAtBottom && bottomRef.current && !document.hidden) {
 			bottomRef.current.scrollIntoView({ behavior: "smooth" });
+			if (chats.length > 0) {
+				handleSeenChat({
+					chatRoomId: chatRoomData._id,
+					messageId: chats[0]._id,
+				});
+			}
 		}
-	}, [chats.length]);
+	}, [chats.length, isAtBottom, bottomRef.current]);
 
 	// biome-ignore lint/correctness/useExhaustiveDependencies: <basta>
 	useEffect(() => {
@@ -118,9 +131,26 @@ export default function Chats({
 							}
 							size={24}
 						/>
-						<span className="whitespace-pre-wrap bg-muted max-w-md rounded-md p-2 sm:p-4 border">
-							{chat.content}
-						</span>
+
+						<div className="bg-muted max-w-md rounded-md p-2 sm:p-4 border">
+							<span className="whitespace-pre-wrap">{chat.content}</span>
+							<div className="flex gap-1 flex-wrap mt-2">
+								{lastSeens?.some((lp) => lp.messageId === chat._id) &&
+									lastSeens
+										.filter((lp) => lp.messageId === chat._id)
+										.map((lp) => (
+											<Avatar
+												key={lp.userId}
+												user={
+													chatRoomData.partiesData.find(
+														(p) => p?._id === lp.userId,
+													) ?? null
+												}
+												size={16}
+											/>
+										))}
+							</div>
+						</div>
 					</div>
 				))}
 
