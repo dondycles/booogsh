@@ -1,5 +1,3 @@
-import { useQuery } from "convex/react";
-import { compact } from "lodash";
 import { Archive, VolumeOff } from "lucide-react";
 import { useRouter } from "next/navigation";
 import {

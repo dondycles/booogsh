@@ -1,6 +1,6 @@
 "use client";
 import { UserProfile } from "@clerk/nextjs";
-import { Moon, Sun, UserCircle2, UserCog2 } from "lucide-react";
+import { Moon, Sun, UserCog2 } from "lucide-react";
 import Link from "next/link";
 import { useTheme } from "next-themes";
 import { useStoreUserEffect } from "@/hooks/useStoreUserEffect";

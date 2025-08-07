@@ -1,5 +1,5 @@
 import { SignedIn, SignedOut, SignInButton } from "@clerk/nextjs";
-import { MessageCircle, Newspaper, Users2 } from "lucide-react";
+import { MessageCircle, Newspaper } from "lucide-react";
 import Link from "next/link";
 import CustomUserButton from "@/components/custom-user-button";
 import Friends from "@/components/friends";
