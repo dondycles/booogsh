@@ -10,7 +10,6 @@ import Friends from "@/components/friends";
 import IsMobile from "@/components/is-mobile";
 import LastActivitySetter from "@/components/last-activity-setter";
 import { Button } from "@/components/ui/button";
-import ChatNavButton from "@/components/unseen-chats-counter";
 import UnseenChatsCounter from "@/components/unseen-chats-counter";
 import { api } from "@/convex/_generated/api";
 
