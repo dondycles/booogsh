@@ -4,13 +4,14 @@ import { SignedIn, SignedOut, SignInButton } from "@clerk/nextjs";
 import { useQuery } from "convex/react";
 import { MessageCircle, Newspaper } from "lucide-react";
 import Link from "next/link";
-import ChatNavButton from "@/components/chat-nav-button";
 import { ChatRoomsProvider } from "@/components/contexts/chat-rooms-context";
 import CustomUserButton from "@/components/custom-user-button";
 import Friends from "@/components/friends";
 import IsMobile from "@/components/is-mobile";
 import LastActivitySetter from "@/components/last-activity-setter";
 import { Button } from "@/components/ui/button";
+import ChatNavButton from "@/components/unseen-chats-counter";
+import UnseenChatsCounter from "@/components/unseen-chats-counter";
 import { api } from "@/convex/_generated/api";
 
 export default function AuthedLayout({
@@ -43,7 +44,19 @@ export default function AuthedLayout({
 											Feed
 										</Link>
 									</Button>
-									<ChatNavButton />
+									<Button
+										variant="ghost"
+										asChild
+										className="flex flex-row justify-baseline gap-2 h-fit text-foreground/75"
+									>
+										<Link href="/chat">
+											<span>
+												<MessageCircle className="size-8 shrink-0 " />
+											</span>
+											Chat
+											<UnseenChatsCounter />
+										</Link>
+									</Button>
 								</div>
 							</div>
 						</SignedIn>
@@ -63,9 +76,10 @@ export default function AuthedLayout({
 									<Newspaper className="shrink-0 size-5" />
 								</Link>
 							</Button>
-							<Button variant="ghost" asChild size="icon">
+							<Button variant="ghost" asChild size="icon" className="relative">
 								<Link href="/chat">
 									<MessageCircle className="shrink-0 size-5" />
+									<UnseenChatsCounter className="absolute top-0 right-0 text-xs font-bold" />
 								</Link>
 							</Button>
 							<SignedIn>
