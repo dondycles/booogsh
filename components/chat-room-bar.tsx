@@ -17,7 +17,7 @@ export default function ChatRoomBar({
 	chatRoomData: Doc<"chatRoom"> & {
 		partiesData: Array<Doc<"users"> | null>;
 		latestMessage: Doc<"chatMessages"> | null;
-		curretUserDbData: Doc<"users">;
+		currentUserDbData: Doc<"users">;
 		isLatestMessageSeenByCurrentUser: boolean;
 	};
 }) {
@@ -39,7 +39,7 @@ export default function ChatRoomBar({
 						/>
 						<p className="flex line-clamp-1 gap-2 justify-between">
 							<span
-								className={`text-sm line-clamp-1 ${chatRoomData.latestMessage?.userId === chatRoomData.curretUserDbData._id ? "text-muted-foreground" : chatRoomData.isLatestMessageSeenByCurrentUser ? "text-muted-foreground" : "text-foreground"}`}
+								className={`text-sm line-clamp-1 ${chatRoomData.latestMessage?.userId === chatRoomData.currentUserDbData._id ? "text-muted-foreground" : chatRoomData.isLatestMessageSeenByCurrentUser ? "text-muted-foreground" : "text-foreground"}`}
 							>
 								{chatRoomData.latestMessage?.content}
 							</span>

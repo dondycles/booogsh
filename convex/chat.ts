@@ -10,20 +10,20 @@ export const getChatRooms = query({
 			throw new ConvexError("You must be logged in to access chat rooms.");
 		}
 
-		const curretUserDbData = await ctx.db
+		const currentUserDbData = await ctx.db
 			.query("users")
 			.withIndex("by_token", (q) =>
 				q.eq("tokenIdentifier", currentUser.tokenIdentifier),
 			)
 			.first();
 
-		if (!curretUserDbData) {
+		if (!currentUserDbData) {
 			throw new ConvexError("Current user data not found.");
 		}
 
 		const currentUserChatRooms = await ctx.db
 			.query("userChatRooms")
-			.withIndex("byUser", (q) => q.eq("userId", curretUserDbData._id))
+			.withIndex("byUser", (q) => q.eq("userId", currentUserDbData._id))
 			.unique();
 
 		const currentUserChatRoomsData = compact(
@@ -31,7 +31,7 @@ export const getChatRooms = query({
 				(currentUserChatRooms?.chatRoomIds || []).map(async (room) => {
 					const roomData = await ctx.db.get(room);
 
-					if (roomData && !roomData.parties.includes(curretUserDbData._id))
+					if (roomData && !roomData.parties.includes(currentUserDbData._id))
 						throw new ConvexError("You are not a member of this chat room.");
 
 					return roomData;
@@ -42,7 +42,7 @@ export const getChatRooms = query({
 		return await Promise.all(
 			currentUserChatRoomsData.map(async (room) => {
 				const otherPartyIds = room.parties.filter(
-					(user) => user !== curretUserDbData._id,
+					(user) => user !== currentUserDbData._id,
 				);
 				const partiesData = await Promise.all(
 					otherPartyIds.map(
@@ -65,7 +65,7 @@ export const getChatRooms = query({
 					.withIndex("byRoomAndUserAndMessage", (q) =>
 						q
 							.eq("roomId", room._id)
-							.eq("userId", curretUserDbData._id)
+							.eq("userId", currentUserDbData._id)
 							.eq("messageId", latestMessage?._id),
 					)
 					.first();
@@ -74,7 +74,7 @@ export const getChatRooms = query({
 					...room,
 					partiesData,
 					latestMessage,
-					curretUserDbData,
+					currentUserDbData,
 					isLatestMessageSeenByCurrentUser: !!isLatestMessageSeenByCurrentUser,
 				};
 			}),

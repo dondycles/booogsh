@@ -1,11 +1,11 @@
 "use client";
 
-import { useQuery } from "convex/react";
+import { useContext } from "react";
 import ChatRoomBar from "@/components/chat-room-bar";
-import { api } from "@/convex/_generated/api";
+import { ChatRoomsContext } from "@/components/contexts/chat-rooms-context";
 
 export default function Chat() {
-	const chatRoomsData = useQuery(api.chat.getChatRooms);
+	const chatRoomsData = useContext(ChatRoomsContext);
 	return (
 		<main data-slot="unaffected-by-mobile-nav">
 			<div className="bg-muted h-12 flex items-center rounded-b-md px-2 sm:px-4 -mt-2 sm:-mt-4">

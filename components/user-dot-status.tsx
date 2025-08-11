@@ -1,3 +1,4 @@
+"use client";
 import { Dot as DotIcon } from "lucide-react";
 import { createContext, useContext } from "react";
 import { useGetTimeDifference } from "@/hooks/use-get-time-difference";
