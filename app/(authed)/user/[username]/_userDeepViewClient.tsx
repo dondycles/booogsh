@@ -1,7 +1,8 @@
 "use client";
-import { useQuery } from "convex/react";
-import { CircleAlert } from "lucide-react";
+import { useMutation, useQuery } from "convex/react";
+import { MessageCircle } from "lucide-react";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import AddFriendButton from "@/components/add-friend-button";
 import Avatar from "@/components/avatar";
 import { Button } from "@/components/ui/button";
@@ -11,8 +12,21 @@ import { useStoreUserEffect } from "@/hooks/useStoreUserEffect";
 import UserPostsClient from "./_userPosts";
 
 export default function UserDeepViewClient({ username }: { username: string }) {
+	const router = useRouter();
 	const { user: currentUser } = useStoreUserEffect();
 	const userProfile = useQuery(api.users.getUserProfile, { username });
+
+	const getOrCreateChatRoom = useMutation(
+		api.chat.getChatRoomIdWithTargetUserOrCreate,
+	);
+
+	const handleGetOrCreateChatRoom = async () => {
+		if (!userProfile?._id) return;
+		const roomId = await getOrCreateChatRoom({ targetUserId: userProfile._id });
+		if (roomId) {
+			router.push(`/chat/${roomId}`);
+		}
+	};
 
 	if (!userProfile) return;
 
@@ -48,11 +62,12 @@ export default function UserDeepViewClient({ username }: { username: string }) {
 					)}
 					{!currentUser || currentUser._id === userProfile._id ? null : (
 						<Button
+							onClick={() => void handleGetOrCreateChatRoom()}
 							variant="outline"
-							className="flex-1 hover:text-destructive text-destructive dark:border-destructive border-destructive"
+							className="flex-1"
 						>
-							<CircleAlert />
-							Block
+							<MessageCircle />
+							Message
 						</Button>
 					)}
 				</div>

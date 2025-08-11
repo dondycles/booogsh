@@ -212,6 +212,90 @@ export const createChatRoom = mutation({
 	},
 });
 
+export const getChatRoomIdWithTargetUserOrCreate = mutation({
+	args: { targetUserId: v.id("users") },
+	handler: async (ctx, { targetUserId }) => {
+		const currentUser = await ctx.auth.getUserIdentity();
+		if (!currentUser) {
+			throw new ConvexError("You must be logged in to access chat rooms.");
+		}
+
+		const curretUserDbData = await ctx.db
+			.query("users")
+			.withIndex("by_token", (q) =>
+				q.eq("tokenIdentifier", currentUser.tokenIdentifier),
+			)
+			.first();
+		if (!curretUserDbData) {
+			throw new ConvexError("Current user data not found.");
+		}
+
+		const currentUserChatRooms = await ctx.db
+			.query("userChatRooms")
+			.withIndex("byUser", (q) => q.eq("userId", curretUserDbData._id))
+			.unique();
+
+		if (currentUserChatRooms?.chatRoomIds) {
+			for (const roomId of currentUserChatRooms.chatRoomIds) {
+				const roomData = await ctx.db.get(roomId);
+				if (
+					roomData &&
+					roomData.parties.length === 2 &&
+					roomData.parties.includes(curretUserDbData._id) &&
+					roomData.parties.includes(targetUserId)
+				) {
+					return roomData._id;
+				}
+			}
+		}
+
+		const targetUserChatRooms = await ctx.db
+			.query("userChatRooms")
+			.withIndex("byUser", (q) => q.eq("userId", targetUserId))
+			.unique();
+
+		if (targetUserChatRooms?.chatRoomIds) {
+			for (const roomId of targetUserChatRooms.chatRoomIds) {
+				const roomData = await ctx.db.get(roomId);
+				if (
+					roomData &&
+					roomData.parties.length === 2 &&
+					roomData.parties.includes(targetUserId) &&
+					roomData.parties.includes(curretUserDbData._id)
+				) {
+					return roomData._id;
+				}
+			}
+		}
+
+		const chatRoomId = await ctx.db.insert("chatRoom", {
+			parties: [curretUserDbData._id, targetUserId],
+		});
+
+		if (currentUserChatRooms)
+			await ctx.db.patch(currentUserChatRooms._id, {
+				chatRoomIds: [...(currentUserChatRooms.chatRoomIds ?? []), chatRoomId],
+			});
+		else
+			await ctx.db.insert("userChatRooms", {
+				userId: curretUserDbData._id,
+				chatRoomIds: [chatRoomId],
+			});
+
+		if (targetUserChatRooms) {
+			await ctx.db.patch(targetUserChatRooms._id, {
+				chatRoomIds: [...(targetUserChatRooms.chatRoomIds ?? []), chatRoomId],
+			});
+		} else {
+			await ctx.db.insert("userChatRooms", {
+				userId: targetUserId,
+				chatRoomIds: [chatRoomId],
+			});
+		}
+
+		return chatRoomId;
+	},
+});
 export const sendChat = mutation({
 	args: { chatRoomId: v.id("chatRoom"), content: v.string() },
 	handler: async (ctx, { chatRoomId, content }) => {
